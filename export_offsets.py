@@ -5,9 +5,12 @@
     .venv/bin/python export_offsets.py --profile profiles/<dir>
 
 Writes dumps/<version>/offsets.hpp, offsets.json and offsets.cs, grouped as
-Namespace::Name like common Windows dumps. Only offsets the profile holds
-evidence for are exported. macOS ARM64 layouts differ from Windows; these
-values are for the macOS client only. No game process is opened.
+Namespace::Name like common Windows dumps: the profile's live-confirmed
+offsets plus every reflected property whose getter decodes to an exact shape
+(dumper/reflection.py). A reflected value that disagrees with a confirmed one
+stops the export. Heuristic decodes go to unverified.json, not the headers.
+macOS ARM64 layouts differ from Windows; these values are for the macOS client
+only. No game process is opened.
 """
 from __future__ import annotations
 
@@ -17,7 +20,9 @@ import json
 from pathlib import Path
 import sys
 
-from rbxl.profiles import PROFILES, select_profile, write_json
+from dumper.macho import MachO
+from dumper.reflection import reflect
+from rbxl.profiles import CLIENT, PROFILES, select_profile, write_json
 
 ROOT = Path(__file__).resolve().parent
 DUMPS = ROOT / "dumps"
@@ -62,6 +67,37 @@ NOTES = {
 }
 
 
+# Confirmed profile offsets that reflection must reproduce exactly.
+CROSS_CHECKS = (("Humanoid", "Health"), ("Humanoid", "MaxHealth"), ("Humanoid", "WalkSpeed"), ("Humanoid", "JumpPower"),
+                ("Humanoid", "UseJumpPower"), ("Camera", "FieldOfView"), ("Camera", "CameraSubject"),
+                ("Workspace", "CurrentCamera"), ("Instance", "Parent"), ("Instance", "Name"))
+
+
+def reflected(curated):
+    """Exact reflected properties as (namespace, name, value, note, type), checked against curated values."""
+    result = reflect(MachO(str(CLIENT)))
+    exact = result["exact"]
+    known = {(namespace, name): value for namespace, name, value in curated}
+    for cls, name in CROSS_CHECKS:
+        entry = exact.get(cls, {}).get(name)
+        if entry is None or entry["offset"] != known.get((cls, name)):
+            raise RuntimeError(f"reflection disagrees with the confirmed {cls}.{name} "
+                               f"({entry and hex(entry['offset'])} vs {hex(known.get((cls, name), 0))}); not exporting")
+    entries = []
+    for cls in sorted(exact):
+        namespace = cls.replace("::", "_")
+        for name in sorted(exact[cls]):
+            entry = exact[cls][name]
+            if (namespace, name) in known:
+                continue
+            if "then" in entry:
+                entries.append((namespace, name, entry["then"], f"at *(object + {entry['offset']:#x}) + this",
+                                entry["type"]))
+            else:
+                entries.append((namespace, name, entry["offset"], None, entry["type"]))
+    return entries, result
+
+
 def collect(profile: Path):
     offsets = json.loads((profile / "offsets.json").read_text(encoding="utf-8"))
     movement = json.loads((profile / "movement.json").read_text(encoding="utf-8"))["selected"]
@@ -83,6 +119,10 @@ def collect(profile: Path):
         entries.append(("SolverBody", "Velocity", solver["velocity"]))
         if len(positions) > 1:
             entries.append(("SolverBody", "BlockStride", positions[1] - positions[0]))
+    curated = list(entries)
+    reflected_entries, reflection = reflected([(namespace, name, value) for namespace, name, value in curated])
+    entries = [(namespace, name, value, NOTES.get((namespace, name)), None) for namespace, name, value in curated]
+    entries += reflected_entries
     meta = {
         "platform": "macOS ARM64 (Apple Silicon)",
         "roblox_version": offsets.get("version") or profile.name,
@@ -90,14 +130,20 @@ def collect(profile: Path):
         "dumped_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "dumper": "WeirdExt export_offsets.py",
         "total": len(entries),
+        "confirmed_live": len(curated),
+        "reflected": len(reflected_entries),
     }
-    return meta, entries
+    unverified = {cls.replace("::", "_"): {name: {"offset": f"{entry['offset']:#x}", "type": entry["type"]}
+                                          for name, entry in sorted(props.items())}
+                  for cls, props in sorted(reflection["heuristic"].items())}
+    return meta, entries, unverified
 
 
 def grouped(entries):
-    groups: dict[str, list[tuple[str, int]]] = {}
-    for namespace, name, value in entries:
-        groups.setdefault(namespace, []).append((name, value))
+    groups: dict[str, list[tuple[str, int, str | None]]] = {}
+    for namespace, name, value, note, value_type in entries:
+        comment = "; ".join(part for part in (value_type, note) if part)
+        groups.setdefault(namespace, []).append((name, value, comment or None))
     return groups
 
 
@@ -106,7 +152,8 @@ def banner(meta, comment):
              f"Roblox Version  : {meta['roblox_version']}",
              f"Binary SHA-256  : {meta['binary_sha256']}",
              f"Dumped At       : {meta['dumped_at']}",
-             f"Total Offsets   : {meta['total']}",
+             f"Total Offsets   : {meta['total']} ({meta['confirmed_live']} confirmed live, "
+             f"{meta['reflected']} from reflection)",
              "", "macOS layouts differ from Windows; use these with the macOS client only."]
     return "\n".join(f"{comment} {line}".rstrip() for line in lines)
 
@@ -115,8 +162,7 @@ def render_hpp(meta, groups):
     out = ["#pragma once", banner(meta, "//"), "", "#include <cstdint>", "", "namespace Offsets {"]
     for namespace, items in groups.items():
         out.append(f"    namespace {namespace} {{")
-        for name, value in items:
-            note = NOTES.get((namespace, name))
+        for name, value, note in items:
             out.append(f"        inline constexpr uintptr_t {name} = {value:#x};" + (f"  // {note}" if note else ""))
         out.append("    }")
     out.append("}")
@@ -128,8 +174,7 @@ def render_cs(meta, groups):
     for namespace, items in groups.items():
         out.append(f"    public static class {namespace}")
         out.append("    {")
-        for name, value in items:
-            note = NOTES.get((namespace, name))
+        for name, value, note in items:
             out.append(f"        public const long {name} = {value:#x};" + (f"  // {note}" if note else ""))
         out.append("    }")
     out.append("}")
@@ -141,17 +186,19 @@ def main(argv=None):
     parser.add_argument("--profile", type=Path, help=f"profile directory under {PROFILES}")
     args = parser.parse_args(argv)
     profile = args.profile or select_profile()
-    meta, entries = collect(profile)
+    meta, entries, unverified = collect(profile)
     groups = grouped(entries)
     directory = DUMPS / meta["roblox_version"]
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "offsets.hpp").write_text(render_hpp(meta, groups), encoding="utf-8")
     (directory / "offsets.cs").write_text(render_cs(meta, groups), encoding="utf-8")
     write_json(directory / "offsets.json", {"meta": meta, "offsets": {
-        namespace: {name: f"{value:#x}" for name, value in items} for namespace, items in groups.items()}})
-    print(f"[export] {meta['total']} offsets for {meta['roblox_version']} -> {directory.relative_to(ROOT)}/")
-    for namespace, items in groups.items():
-        print(f"  {namespace:15} " + "  ".join(f"{name}={value:#x}" for name, value in items))
+        namespace: {name: f"{value:#x}" for name, value, _ in items} for namespace, items in groups.items()}})
+    write_json(directory / "unverified.json", {"meta": {**meta, "note": "heuristic getter decodes; confirm live "
+                                                         "before use"}, "offsets": unverified})
+    print(f"[export] {meta['total']} offsets ({meta['confirmed_live']} confirmed live, {meta['reflected']} reflected) "
+          f"in {len(groups)} namespaces for {meta['roblox_version']} -> {directory.relative_to(ROOT)}/")
+    print(f"[export] {sum(map(len, unverified.values()))} heuristic decodes -> unverified.json")
     return 0
 
 

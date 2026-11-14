@@ -1,0 +1,2817 @@
+{
+  "meta": {
+    "platform": "macOS ARM64 (Apple Silicon)",
+    "roblox_version": "0.745.0.7451137",
+    "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
+    "dumped_at": "2026-11-14 21:02 UTC",
+    "dumper": "WeirdExt export_offsets.py",
+    "total": 2318,
+    "confirmed_live": 29,
+    "reflected": 2289,
+    "note": "heuristic getter decodes; confirm live before use"
+  },
+  "offsets": {
+    "Ads_AdGui": {
+      "FallbackImage": {
+        "offset": "0x790",
+        "type": "ContentId"
+      },
+      "FallbackImageContent": {
+        "offset": "0x790",
+        "type": "Content"
+      }
+    },
+    "Ads_AdPlacement": {
+      "ActivationInstance": {
+        "offset": "0xf0",
+        "type": null
+      }
+    },
+    "AnimationClip": {
+      "GuidBinaryString": {
+        "offset": "0x98",
+        "type": "BinaryString"
+      }
+    },
+    "AnimationRigData": {
+      "Generic": {
+        "offset": "0x98",
+        "type": "BinaryString"
+      },
+      "label": {
+        "offset": "0x560",
+        "type": "BinaryString"
+      },
+      "name": {
+        "offset": "0x560",
+        "type": "BinaryString"
+      },
+      "parent": {
+        "offset": "0x560",
+        "type": "BinaryString"
+      },
+      "postTransform": {
+        "offset": "0x560",
+        "type": "BinaryString"
+      },
+      "preTransform": {
+        "offset": "0x560",
+        "type": "BinaryString"
+      },
+      "transform": {
+        "offset": "0x560",
+        "type": "BinaryString"
+      }
+    },
+    "AnimationTrack": {
+      "Looped": {
+        "offset": "0x9b1",
+        "type": "bool"
+      }
+    },
+    "Animator": {
+      "AnimTrackWeight6": {
+        "offset": "0x298",
+        "type": "AnimTrackWeight"
+      },
+      "AnimTrackWeight7": {
+        "offset": "0x2a8",
+        "type": "AnimTrackWeight"
+      },
+      "AnimTrackWeight8": {
+        "offset": "0x2b8",
+        "type": "AnimTrackWeight"
+      },
+      "AnimTrackWeight9": {
+        "offset": "0x2c8",
+        "type": "AnimTrackWeight"
+      },
+      "FacsReplicationData": {
+        "offset": "0xa0",
+        "type": "FacsReplicationData"
+      }
+    },
+    "AssetDeliveryProxy": {
+      "Port": {
+        "offset": "0x108",
+        "type": "int"
+      }
+    },
+    "Attachment": {
+      "Orientation": {
+        "offset": "0xa8",
+        "type": "Vector3"
+      },
+      "Rotation": {
+        "offset": "0xa8",
+        "type": "Vector3"
+      },
+      "WorldAxis": {
+        "offset": "0xa0",
+        "type": "Vector3"
+      },
+      "WorldPosition": {
+        "offset": "0xb4",
+        "type": "Vector3"
+      },
+      "WorldSecondaryAxis": {
+        "offset": "0xb8",
+        "type": "Vector3"
+      }
+    },
+    "AuroraScript": {
+      "Source": {
+        "offset": "0xe0",
+        "type": "ProtectedString"
+      }
+    },
+    "AuroraScriptObject": {
+      "BehaviorWeak": {
+        "offset": "0x98",
+        "type": null
+      },
+      "BoundInstanceWeak": {
+        "offset": "0xa8",
+        "type": null
+      }
+    },
+    "BackpackItem": {
+      "TextureContent": {
+        "offset": "0x2f8",
+        "type": "Content"
+      },
+      "TextureId": {
+        "offset": "0x2f0",
+        "type": "ContentId"
+      }
+    },
+    "BasePart": {
+      "Anchored": {
+        "offset": "0x168",
+        "type": "bool"
+      },
+      "AssemblyAngularVelocity": {
+        "offset": "0x168",
+        "type": "Vector3"
+      },
+      "AssemblyLinearVelocity": {
+        "offset": "0x168",
+        "type": "Vector3"
+      },
+      "CFrame": {
+        "offset": "0xc0",
+        "type": "CoordinateFrame"
+      },
+      "CanCollide": {
+        "offset": "0x168",
+        "type": "bool"
+      },
+      "CanQuery": {
+        "offset": "0x168",
+        "type": "bool"
+      },
+      "CanTouch": {
+        "offset": "0x168",
+        "type": "bool"
+      },
+      "CollisionGroup": {
+        "offset": "0xb7",
+        "type": null
+      },
+      "CollisionGroupReplicate": {
+        "offset": "0x168",
+        "type": null
+      },
+      "CustomPhysicalProperties": {
+        "offset": "0xa0",
+        "type": "PhysicalProperties"
+      },
+      "DraggingV1": {
+        "offset": "0x168",
+        "type": "bool"
+      },
+      "EnableFluidForces": {
+        "offset": "0x168",
+        "type": "bool"
+      },
+      "MaterialVariant": {
+        "offset": "0xb7",
+        "type": null
+      },
+      "MaterialVariantSerialized": {
+        "offset": "0xb7",
+        "type": null
+      },
+      "Orientation": {
+        "offset": "0xa0",
+        "type": "Vector3"
+      },
+      "PivotOffset": {
+        "offset": "0xc0",
+        "type": "CoordinateFrame"
+      },
+      "Position": {
+        "offset": "0xa8",
+        "type": "Vector3"
+      },
+      "RootPriority": {
+        "offset": "0x168",
+        "type": "int"
+      },
+      "RotVelocity": {
+        "offset": "0xa8",
+        "type": "Vector3"
+      },
+      "Rotation": {
+        "offset": "0xa0",
+        "type": "Vector3"
+      },
+      "Velocity": {
+        "offset": "0xa8",
+        "type": "Vector3"
+      }
+    },
+    "BaseScript": {
+      "Enabled": {
+        "offset": "0x10c",
+        "type": "bool"
+      }
+    },
+    "BaseWrap": {
+      "CageMeshId": {
+        "offset": "0xa0",
+        "type": "ContentId"
+      },
+      "HSRAssetId": {
+        "offset": "0xc8",
+        "type": "ContentId"
+      },
+      "HSRContent": {
+        "offset": "0xc8",
+        "type": "Content"
+      },
+      "TemporaryCageMeshContent": {
+        "offset": "0xf0",
+        "type": "Content"
+      },
+      "TemporaryCageMeshId": {
+        "offset": "0xf0",
+        "type": "ContentId"
+      }
+    },
+    "Beam": {
+      "Attachment0": {
+        "offset": "0x140",
+        "type": null
+      },
+      "Attachment1": {
+        "offset": "0x150",
+        "type": null
+      },
+      "Texture": {
+        "offset": "0x118",
+        "type": "ContentId"
+      },
+      "TextureContent": {
+        "offset": "0x118",
+        "type": "Content"
+      }
+    },
+    "BillboardGui": {
+      "Adornee": {
+        "offset": "0x698",
+        "type": null
+      },
+      "PlayerToHideFrom": {
+        "offset": "0x6a8",
+        "type": null
+      }
+    },
+    "BubbleChatConfiguration": {
+      "Font": {
+        "offset": "0xc0",
+        "type": "Text::Font"
+      },
+      "FontFace": {
+        "offset": "0xc0",
+        "type": "Text::FontInfo"
+      }
+    },
+    "BubbleChatMessageProperties": {
+      "FontFace": {
+        "offset": "0xe8",
+        "type": "Text::FontInfo"
+      }
+    },
+    "BuoyancySensor": {
+      "FullySubmerged": {
+        "offset": "0x230",
+        "type": "bool"
+      },
+      "TouchingSurface": {
+        "offset": "0x231",
+        "type": "bool"
+      }
+    },
+    "CRenderSettingsItem": {
+      "AutoFRMLevel": {
+        "offset": "0x20",
+        "type": "int"
+      },
+      "EagerBulkExecution": {
+        "offset": "0x34",
+        "type": "bool"
+      },
+      "EditQualityLevel": {
+        "offset": "0x14",
+        "type": "Enums::QualityLevel"
+      },
+      "EnableFRM": {
+        "offset": "0x2a",
+        "type": "bool"
+      },
+      "FrameRateManager": {
+        "offset": "0xc",
+        "type": "Enums::FramerateManagerMode"
+      },
+      "GraphicsMode": {
+        "offset": "0x8",
+        "type": "Enums::GraphicsMode"
+      },
+      "MeshCacheSize": {
+        "offset": "0x38",
+        "type": "int"
+      },
+      "MeshPartDetailLevel": {
+        "offset": "0x18",
+        "type": "Enums::MeshPartDetailLevel"
+      },
+      "QualityLevel": {
+        "offset": "0x14",
+        "type": "Enums::QualityLevel"
+      },
+      "ShowBoundingBoxes": {
+        "offset": "0x28",
+        "type": "bool"
+      },
+      "ViewMode": {
+        "offset": "0x1c",
+        "type": "Enums::ViewMode"
+      }
+    },
+    "CanvasGroup": {
+      "GroupColor3": {
+        "offset": "0x99c",
+        "type": "Color3"
+      },
+      "GroupTransparency": {
+        "offset": "0x9a8",
+        "type": "float"
+      }
+    },
+    "ChannelTabsConfiguration": {
+      "FontFace": {
+        "offset": "0xa8",
+        "type": "Text::FontInfo"
+      }
+    },
+    "CharacterMesh": {
+      "BaseTextureId": {
+        "offset": "0xa0",
+        "type": "int64"
+      },
+      "MeshContent": {
+        "offset": "0xc8",
+        "type": "Content"
+      },
+      "MeshId": {
+        "offset": "0xc8",
+        "type": "int64"
+      },
+      "OverlayTextureContent": {
+        "offset": "0xf0",
+        "type": "Content"
+      },
+      "OverlayTextureId": {
+        "offset": "0xf0",
+        "type": "int64"
+      }
+    },
+    "ChatInputBarConfiguration": {
+      "FontFace": {
+        "offset": "0xc8",
+        "type": "Text::FontInfo"
+      }
+    },
+    "ChatWindowConfiguration": {
+      "FontFace": {
+        "offset": "0xa8",
+        "type": "Text::FontInfo"
+      }
+    },
+    "ChatWindowMessageProperties": {
+      "FontFace": {
+        "offset": "0xf0",
+        "type": "Text::FontInfo"
+      }
+    },
+    "ClickDetector": {
+      "CursorIcon": {
+        "offset": "0xa0",
+        "type": "ContentId"
+      },
+      "CursorIconContent": {
+        "offset": "0xa0",
+        "type": "Content"
+      }
+    },
+    "Clothing": {
+      "Outfit1": {
+        "offset": "0xa8",
+        "type": "ContentId"
+      },
+      "Outfit1Content": {
+        "offset": "0xa8",
+        "type": "Content"
+      },
+      "Outfit2": {
+        "offset": "0xd0",
+        "type": "ContentId"
+      },
+      "Outfit2Content": {
+        "offset": "0xd0",
+        "type": "Content"
+      }
+    },
+    "Constraints_AnimationConstraint": {
+      "Transform": {
+        "offset": "0xd0",
+        "type": "CoordinateFrame"
+      }
+    },
+    "Constraints_Constraint": {
+      "Attachment0": {
+        "offset": "0xf0",
+        "type": null
+      },
+      "Attachment1": {
+        "offset": "0x110",
+        "type": null
+      }
+    },
+    "Constraints_NoCollisionConstraint": {
+      "Part0": {
+        "offset": "0xa0",
+        "type": null
+      },
+      "Part1": {
+        "offset": "0xb0",
+        "type": null
+      }
+    },
+    "Constraints_WeldConstraint": {
+      "CFrame0": {
+        "offset": "0xd0",
+        "type": "CoordinateFrame"
+      },
+      "CFrame1": {
+        "offset": "0xd0",
+        "type": "CoordinateFrame"
+      },
+      "Part0": {
+        "offset": "0xa0",
+        "type": null
+      },
+      "Part0Internal": {
+        "offset": "0xa0",
+        "type": null
+      },
+      "Part1": {
+        "offset": "0xb0",
+        "type": null
+      },
+      "Part1Internal": {
+        "offset": "0xb0",
+        "type": null
+      },
+      "State": {
+        "offset": "0xc0",
+        "type": "int"
+      }
+    },
+    "ControlState": {
+      "Owner": {
+        "offset": "0xb0",
+        "type": null
+      }
+    },
+    "ControllerPartSensor": {
+      "SensedMaterial": {
+        "offset": "0x288",
+        "type": "MaterialType"
+      },
+      "SensedPart": {
+        "offset": "0x230",
+        "type": null
+      }
+    },
+    "CustomEventReceiver": {
+      "Source": {
+        "offset": "0xa0",
+        "type": null
+      }
+    },
+    "CustomParticleEmitter": {
+      "FlipbookIncompatible": {
+        "offset": "0x150",
+        "type": null
+      },
+      "Texture": {
+        "offset": "0x198",
+        "type": "ContentId"
+      },
+      "TextureContent": {
+        "offset": "0x198",
+        "type": "Content"
+      }
+    },
+    "DataModel": {
+      "GameAvatarType": {
+        "offset": "0x0",
+        "type": "GameAvatarType"
+      },
+      "R15CollisionType": {
+        "offset": "0x0",
+        "type": "R15CollisionType"
+      }
+    },
+    "Decal": {
+      "LocalizedTextureContent": {
+        "offset": "0xf0",
+        "type": "Content"
+      },
+      "TexturePack": {
+        "offset": "0x1b8",
+        "type": "ContentId"
+      }
+    },
+    "DragDetector": {
+      "ActivatedCursorIcon": {
+        "offset": "0x170",
+        "type": "ContentId"
+      },
+      "ActivatedCursorIconContent": {
+        "offset": "0x170",
+        "type": "Content"
+      },
+      "PhysicalDragClickedPart": {
+        "offset": "0x198",
+        "type": null
+      },
+      "ReferenceInstance": {
+        "offset": "0x1a8",
+        "type": null
+      }
+    },
+    "DynamicRotate": {
+      "BaseAngle": {
+        "offset": "0x0",
+        "type": "float"
+      }
+    },
+    "FaceAnimatorService": {
+      "AudioAnimationEnabled": {
+        "offset": "0xe0",
+        "type": "bool"
+      },
+      "FaceTrackingStatusEnum": {
+        "offset": "0xe0",
+        "type": "TrackerFaceTrackingStatus"
+      },
+      "FlipHeadOrientation": {
+        "offset": "0xe0",
+        "type": "bool"
+      },
+      "VideoAnimationEnabled": {
+        "offset": "0xe0",
+        "type": "bool"
+      }
+    },
+    "FileMesh": {
+      "MeshContent": {
+        "offset": "0xd0",
+        "type": "Content"
+      },
+      "MeshId": {
+        "offset": "0xd0",
+        "type": "ContentId"
+      },
+      "TextureContent": {
+        "offset": "0xf8",
+        "type": "Content"
+      },
+      "TextureId": {
+        "offset": "0xf8",
+        "type": "ContentId"
+      }
+    },
+    "FileSyncItem": {
+      "Path": {
+        "offset": "0xaf",
+        "type": null
+      }
+    },
+    "FloatCurve": {
+      "ValuesAndTimes": {
+        "offset": "0xa0",
+        "type": "BinaryString"
+      }
+    },
+    "FloorWire": {
+      "From": {
+        "offset": "0x100",
+        "type": null
+      },
+      "Texture": {
+        "offset": "0xe0",
+        "type": "ContentId"
+      },
+      "To": {
+        "offset": "0x110",
+        "type": null
+      }
+    },
+    "Folder": {
+      "IconTint": {
+        "offset": "0xa8",
+        "type": "Color3"
+      }
+    },
+    "Frame": {
+      "Style": {
+        "offset": "0x9a0",
+        "type": "Enums::FrameStyle"
+      }
+    },
+    "GameBasicSettings": {
+      "CameraMode": {
+        "offset": "0x1a0",
+        "type": "Enums::CustomCameraMode"
+      },
+      "ChatTranslationEnabled": {
+        "offset": "0x1e9",
+        "type": "bool"
+      },
+      "ChatTranslationFTUXShown": {
+        "offset": "0x1e9",
+        "type": "bool"
+      },
+      "ChatTranslationToggleEnabled": {
+        "offset": "0x1e9",
+        "type": "bool"
+      },
+      "ChatVisible": {
+        "offset": "0x206",
+        "type": "bool"
+      },
+      "ComputerCameraMovementMode": {
+        "offset": "0x1a4",
+        "type": "Enums::ComputerCameraMovementModeEnum::ComputerCameraMovementMode"
+      },
+      "ComputerMovementMode": {
+        "offset": "0x1a8",
+        "type": "Enums::ComputerMovementModeEnum::ComputerMovementMode"
+      },
+      "ControlMode": {
+        "offset": "0x1ac",
+        "type": "Enums::ControlModeEnum::ControlMode"
+      },
+      "Fullscreen": {
+        "offset": "0x209",
+        "type": "bool"
+      },
+      "MicroProfilerWebServerEnabled": {
+        "offset": "0x20d",
+        "type": "bool"
+      },
+      "OnScreenProfilerEnabled": {
+        "offset": "0x20e",
+        "type": "bool"
+      },
+      "PerformanceStatsVisible": {
+        "offset": "0x20f",
+        "type": "bool"
+      },
+      "PlayerHeight": {
+        "offset": "0x1cc",
+        "type": "float"
+      },
+      "RCCProfilerRecordFrameRate": {
+        "offset": "0x1d0",
+        "type": "int"
+      },
+      "RCCProfilerRecordTimeFrame": {
+        "offset": "0x1d4",
+        "type": "int"
+      },
+      "SavedQualityLevel": {
+        "offset": "0x48",
+        "type": "Enums::SavedQualitySettingEnum::RenderQualitySetting"
+      },
+      "TouchCameraMovementMode": {
+        "offset": "0xf4",
+        "type": "Enums::TouchCameraMovementModeEnum::TouchCameraMovementMode"
+      },
+      "TouchMovementMode": {
+        "offset": "0x1dc",
+        "type": "Enums::TouchMovementModeEnum::TouchMovementMode"
+      },
+      "UIScaleMultiplierHundredths": {
+        "offset": "0x1e8",
+        "type": "int"
+      },
+      "UsedCoreGuiIsVisibleToggle": {
+        "offset": "0x213",
+        "type": "bool"
+      },
+      "UsedCustomGuiIsVisibleToggle": {
+        "offset": "0x214",
+        "type": "bool"
+      },
+      "UsedHideHudShortcut": {
+        "offset": "0x215",
+        "type": "bool"
+      },
+      "VRComfortSetting": {
+        "offset": "0x1e0",
+        "type": "Enums::VRComfortSetting"
+      },
+      "VRRotationIntensity": {
+        "offset": "0x1e4",
+        "type": "int"
+      },
+      "VRSmoothRotationEnabledCustomOption": {
+        "offset": "0x218",
+        "type": "bool"
+      },
+      "VRThirdPersonFollowCamEnabledCustomOption": {
+        "offset": "0x21a",
+        "type": "bool"
+      },
+      "VignetteEnabledCustomOption": {
+        "offset": "0x21c",
+        "type": "bool"
+      }
+    },
+    "GuiBase2d": {
+      "ActiveQueryNames": {
+        "offset": "0x480",
+        "type": null
+      },
+      "AutoLocalize": {
+        "offset": "0x11c",
+        "type": "bool"
+      },
+      "Localize": {
+        "offset": "0x11c",
+        "type": "bool"
+      },
+      "RootLocalizationTable": {
+        "offset": "0xc0",
+        "type": null
+      },
+      "SelectionGroup": {
+        "offset": "0x11e",
+        "type": "bool"
+      }
+    },
+    "GuiButton": {
+      "HoverHapticEffect": {
+        "offset": "0x9a8",
+        "type": null
+      },
+      "Modal": {
+        "offset": "0x9a0",
+        "type": "bool"
+      },
+      "PressHapticEffect": {
+        "offset": "0x9b8",
+        "type": null
+      },
+      "Style": {
+        "offset": "0x9a0",
+        "type": "Enums::ButtonStyle"
+      }
+    },
+    "GuiImageButton": {
+      "HoverImage": {
+        "offset": "0xcd0",
+        "type": "ContentId"
+      },
+      "HoverImageContent": {
+        "offset": "0xcd0",
+        "type": "Content"
+      },
+      "Image": {
+        "offset": "0xcd0",
+        "type": "ContentId"
+      },
+      "ImageColor3": {
+        "offset": "0xd98",
+        "type": "Color3"
+      },
+      "ImageContent": {
+        "offset": "0xcd0",
+        "type": "Content"
+      },
+      "ImageRectOffset": {
+        "offset": "0xcd0",
+        "type": "Vector2"
+      },
+      "ImageRectSize": {
+        "offset": "0xcd0",
+        "type": "Vector2"
+      },
+      "ImageTransparency": {
+        "offset": "0xcd0",
+        "type": "float"
+      },
+      "LocalizedImageContent": {
+        "offset": "0xd28",
+        "type": "Content"
+      },
+      "PressedImage": {
+        "offset": "0xcd0",
+        "type": "ContentId"
+      },
+      "PressedImageContent": {
+        "offset": "0xcd0",
+        "type": "Content"
+      },
+      "ResampleMode": {
+        "offset": "0xcd0",
+        "type": "Enums::ImageResampleMode"
+      },
+      "ScaleType": {
+        "offset": "0xcd0",
+        "type": "Enums::ImageScale"
+      },
+      "SliceCenter": {
+        "offset": "0xd78",
+        "type": "Rect2D"
+      },
+      "SliceScale": {
+        "offset": "0xcd0",
+        "type": "float"
+      },
+      "TileSize": {
+        "offset": "0xd88",
+        "type": "UDim2"
+      }
+    },
+    "GuiObject": {
+      "Active": {
+        "offset": "0x488",
+        "type": "bool"
+      },
+      "AnchorPoint": {
+        "offset": "0x488",
+        "type": "Vector2"
+      },
+      "AutomaticSize": {
+        "offset": "0x488",
+        "type": "Enums::AutomaticSize"
+      },
+      "BackgroundColor3": {
+        "offset": "0x510",
+        "type": "Color3"
+      },
+      "BackgroundTransparency": {
+        "offset": "0x488",
+        "type": "float"
+      },
+      "BorderColor3": {
+        "offset": "0x51c",
+        "type": "Color3"
+      },
+      "BorderMode": {
+        "offset": "0x488",
+        "type": "Enums::BorderMode"
+      },
+      "BorderSizePixel": {
+        "offset": "0x488",
+        "type": "int"
+      },
+      "ClipsDescendants": {
+        "offset": "0x488",
+        "type": "bool"
+      },
+      "LayoutOrder": {
+        "offset": "0x488",
+        "type": "int"
+      },
+      "NextSelectionDown": {
+        "offset": "0x490",
+        "type": null
+      },
+      "NextSelectionLeft": {
+        "offset": "0x4a0",
+        "type": null
+      },
+      "NextSelectionRight": {
+        "offset": "0x4b0",
+        "type": null
+      },
+      "NextSelectionUp": {
+        "offset": "0x4c0",
+        "type": null
+      },
+      "Selectable": {
+        "offset": "0x488",
+        "type": "bool"
+      },
+      "SelectionOrder": {
+        "offset": "0x488",
+        "type": "int"
+      },
+      "SizeConstraint": {
+        "offset": "0x488",
+        "type": "Enums::SizeConstraint"
+      },
+      "Transparency": {
+        "offset": "0x488",
+        "type": "float"
+      },
+      "Visible": {
+        "offset": "0x488",
+        "type": "bool"
+      },
+      "ZIndex": {
+        "offset": "0x488",
+        "type": "int"
+      }
+    },
+    "GuiService": {
+      "AutoSelectGuiEnabled": {
+        "offset": "0x1f8",
+        "type": "bool"
+      },
+      "CoreEffectFolder": {
+        "offset": "0xb0",
+        "type": null
+      },
+      "CoreGuiFolder": {
+        "offset": "0xc0",
+        "type": null
+      },
+      "CoreGuiNavigationEnabled": {
+        "offset": "0x3e0",
+        "type": "bool"
+      },
+      "SelectedCoreObject": {
+        "offset": "0x508",
+        "type": null
+      },
+      "SelectedObject": {
+        "offset": "0x4f8",
+        "type": null
+      }
+    },
+    "GuiTextButton": {
+      "FontFace": {
+        "offset": "0x170",
+        "type": "Text::FontInfo"
+      },
+      "FontSize": {
+        "offset": "0xc0",
+        "type": "Enums::FontSizeEnum::FontSize"
+      },
+      "LineHeight": {
+        "offset": "0xa8",
+        "type": "float"
+      },
+      "MaxVisibleGraphemes": {
+        "offset": "0xac",
+        "type": "int"
+      },
+      "OpenTypeFeatures": {
+        "offset": "0x1e0",
+        "type": null
+      },
+      "RichText": {
+        "offset": "0xcd",
+        "type": "bool"
+      },
+      "Text": {
+        "offset": "0x68",
+        "type": null
+      },
+      "TextColor3": {
+        "offset": "0x90",
+        "type": "Color3"
+      },
+      "TextDirection": {
+        "offset": "0xb0",
+        "type": "Text::TextDirection"
+      },
+      "TextScaled": {
+        "offset": "0xcf",
+        "type": "bool"
+      },
+      "TextSize": {
+        "offset": "0xb4",
+        "type": "float"
+      },
+      "TextStrokeColor3": {
+        "offset": "0x9c",
+        "type": "Color3"
+      },
+      "TextStrokeTransparency": {
+        "offset": "0xb8",
+        "type": "float"
+      },
+      "TextTransparency": {
+        "offset": "0xbc",
+        "type": "float"
+      },
+      "TextTruncate": {
+        "offset": "0xc0",
+        "type": "Enums::TextTruncateEnum::TextTruncate"
+      },
+      "TextWrap": {
+        "offset": "0xd0",
+        "type": "bool"
+      },
+      "TextWrapped": {
+        "offset": "0xd0",
+        "type": "bool"
+      },
+      "TextXAlignment": {
+        "offset": "0xc4",
+        "type": "Enums::TextXAlignmentEnum::XAlignment"
+      },
+      "TextYAlignment": {
+        "offset": "0xc8",
+        "type": "Enums::TextYAlignmentEnum::YAlignment"
+      }
+    },
+    "HandleAdornment": {
+      "GizmoReference": {
+        "offset": "0xf0",
+        "type": null
+      },
+      "ZIndex": {
+        "offset": "0xe8",
+        "type": "int"
+      }
+    },
+    "Highlight": {
+      "Adornee": {
+        "offset": "0xa0",
+        "type": null
+      }
+    },
+    "Humanoid": {
+      "LeftLeg": {
+        "offset": "0x1a4",
+        "type": null
+      },
+      "RightLeg": {
+        "offset": "0x1a4",
+        "type": null
+      },
+      "Torso": {
+        "offset": "0x1a4",
+        "type": null
+      }
+    },
+    "HumanoidDescription": {
+      "AccessoryBlob": {
+        "offset": "0x160",
+        "type": null
+      },
+      "EmotesDataInternal": {
+        "offset": "0x98",
+        "type": null
+      },
+      "EquippedEmotesDataInternal": {
+        "offset": "0x98",
+        "type": null
+      },
+      "Head": {
+        "offset": "0xc0",
+        "type": "int64"
+      },
+      "HeadColor": {
+        "offset": "0xd0",
+        "type": "Color3"
+      },
+      "LeftArm": {
+        "offset": "0xc0",
+        "type": "int64"
+      },
+      "LeftArmColor": {
+        "offset": "0xd0",
+        "type": "Color3"
+      },
+      "LeftLeg": {
+        "offset": "0xc0",
+        "type": "int64"
+      },
+      "LeftLegColor": {
+        "offset": "0xd0",
+        "type": "Color3"
+      },
+      "RightArm": {
+        "offset": "0xc0",
+        "type": "int64"
+      },
+      "RightArmColor": {
+        "offset": "0xd0",
+        "type": "Color3"
+      },
+      "RightLeg": {
+        "offset": "0xc0",
+        "type": "int64"
+      },
+      "RightLegColor": {
+        "offset": "0xd0",
+        "type": "Color3"
+      },
+      "Torso": {
+        "offset": "0xc0",
+        "type": "int64"
+      },
+      "TorsoColor": {
+        "offset": "0xd0",
+        "type": "Color3"
+      }
+    },
+    "ImageLabel": {
+      "Image": {
+        "offset": "0xa48",
+        "type": "ContentId"
+      },
+      "ImageColor3": {
+        "offset": "0xac0",
+        "type": "Color3"
+      },
+      "ImageContent": {
+        "offset": "0xa48",
+        "type": "Content"
+      },
+      "ImageRectOffset": {
+        "offset": "0xa48",
+        "type": "Vector2"
+      },
+      "ImageRectSize": {
+        "offset": "0xa48",
+        "type": "Vector2"
+      },
+      "ImageTransparency": {
+        "offset": "0xa48",
+        "type": "float"
+      },
+      "LocalizedImageContent": {
+        "offset": "0xa78",
+        "type": "Content"
+      },
+      "ResampleMode": {
+        "offset": "0xa48",
+        "type": "Enums::ImageResampleMode"
+      },
+      "ScaleType": {
+        "offset": "0xa48",
+        "type": "Enums::ImageScale"
+      },
+      "SliceCenter": {
+        "offset": "0xaa0",
+        "type": "Rect2D"
+      },
+      "SliceScale": {
+        "offset": "0xa48",
+        "type": "float"
+      },
+      "TileSize": {
+        "offset": "0xab0",
+        "type": "UDim2"
+      }
+    },
+    "InputActionLabel": {
+      "FontFace": {
+        "offset": "0x9a0",
+        "type": "Text::FontInfo"
+      },
+      "ImageColor3": {
+        "offset": "0x9f8",
+        "type": "Color3"
+      },
+      "ImageTransparency": {
+        "offset": "0x9a0",
+        "type": "float"
+      },
+      "InputAction": {
+        "offset": "0x9e0",
+        "type": null
+      },
+      "TextColor3": {
+        "offset": "0xa04",
+        "type": "Color3"
+      },
+      "TextSize": {
+        "offset": "0x9a0",
+        "type": "float"
+      },
+      "TextTransparency": {
+        "offset": "0x9a0",
+        "type": "float"
+      },
+      "TextWrapped": {
+        "offset": "0x9a0",
+        "type": "bool"
+      },
+      "TextXAlignment": {
+        "offset": "0x9a0",
+        "type": "Enums::TextXAlignmentEnum::XAlignment"
+      },
+      "TextYAlignment": {
+        "offset": "0x9a0",
+        "type": "Enums::TextYAlignmentEnum::YAlignment"
+      }
+    },
+    "InputBinding": {
+      "DisplayImage": {
+        "offset": "0xa0",
+        "type": "Content"
+      },
+      "ReleasedThreshold": {
+        "offset": "0x134",
+        "type": "float"
+      },
+      "UIButton": {
+        "offset": "0xe0",
+        "type": null
+      },
+      "UIModifier": {
+        "offset": "0xf0",
+        "type": null
+      }
+    },
+    "InputObject": {
+      "Position": {
+        "offset": "0xb4",
+        "type": "Vector3"
+      }
+    },
+    "Instance": {
+      "Archivable": {
+        "offset": "0x92",
+        "type": "bool"
+      },
+      "AttributesSerialize": {
+        "offset": "0x0",
+        "type": "BinaryString"
+      },
+      "Capabilities": {
+        "offset": "0x0",
+        "type": "Security::Capabilities"
+      },
+      "DefinesCapabilities": {
+        "offset": "0x92",
+        "type": "bool"
+      },
+      "Sandboxed": {
+        "offset": "0x92",
+        "type": "bool"
+      },
+      "SourceAssetId": {
+        "offset": "0x0",
+        "type": "int64"
+      },
+      "archivable": {
+        "offset": "0x92",
+        "type": "bool"
+      }
+    },
+    "InstanceAdornment": {
+      "Adornee": {
+        "offset": "0xd8",
+        "type": null
+      }
+    },
+    "JointInstance": {
+      "C0": {
+        "offset": "0x168",
+        "type": "CoordinateFrame"
+      },
+      "C1": {
+        "offset": "0x168",
+        "type": "CoordinateFrame"
+      },
+      "Part0": {
+        "offset": "0x100",
+        "type": null
+      }
+    },
+    "Lighting": {
+      "ClockTime": {
+        "offset": "0xb0",
+        "type": "float"
+      },
+      "Technology": {
+        "offset": "0x128",
+        "type": "LightingTechnology"
+      }
+    },
+    "LocalizationService": {
+      "LocaleManifest": {
+        "offset": "0x360",
+        "type": null
+      }
+    },
+    "LocalizationTable": {
+      "Contents": {
+        "offset": "0x180",
+        "type": null
+      },
+      "Root": {
+        "offset": "0xb8",
+        "type": null
+      }
+    },
+    "LodDataEntity": {
+      "EntityData": {
+        "offset": "0xd8",
+        "type": "SharedString"
+      },
+      "EntitySource": {
+        "offset": "0xb8",
+        "type": null
+      },
+      "SlimAnimationSource": {
+        "offset": "0xc8",
+        "type": null
+      }
+    },
+    "LuaSourceContainer": {
+      "SandboxedSource": {
+        "offset": "0xd8",
+        "type": "ProtectedString"
+      }
+    },
+    "MarkerCurve": {
+      "ValuesAndTimes": {
+        "offset": "0xa0",
+        "type": "BinaryString"
+      }
+    },
+    "MaterialVariant": {
+      "ColorMap": {
+        "offset": "0x98",
+        "type": "ContentId"
+      },
+      "MetalnessMap": {
+        "offset": "0x98",
+        "type": "ContentId"
+      },
+      "NormalMap": {
+        "offset": "0x98",
+        "type": "ContentId"
+      },
+      "RoughnessMap": {
+        "offset": "0x98",
+        "type": "ContentId"
+      },
+      "TexturePack": {
+        "offset": "0x168",
+        "type": "ContentId"
+      },
+      "TexturePackContent": {
+        "offset": "0x168",
+        "type": "Content"
+      }
+    },
+    "MegaClusterInstance": {
+      "MaterialColors": {
+        "offset": "0x490",
+        "type": "BinaryString"
+      },
+      "Materials": {
+        "offset": "0x280",
+        "type": "SharedString"
+      },
+      "PhysicsGrid": {
+        "offset": "0x168",
+        "type": "BinaryString"
+      },
+      "SmoothGrid": {
+        "offset": "0x228",
+        "type": "BinaryString"
+      },
+      "VoxelGridAssetContentMap": {
+        "offset": "0x228",
+        "type": "AssetContentMap"
+      }
+    },
+    "MeshPart": {
+      "MeshID": {
+        "offset": "0x2d0",
+        "type": "ContentId"
+      },
+      "MeshId": {
+        "offset": "0x2d0",
+        "type": "ContentId"
+      },
+      "TextureID": {
+        "offset": "0x2f8",
+        "type": "ContentId"
+      }
+    },
+    "ModelInstance": {
+      "LodEntity": {
+        "offset": "0xa8",
+        "type": null
+      },
+      "PrimaryPart": {
+        "offset": "0x200",
+        "type": null
+      },
+      "SlimAnimationTarget": {
+        "offset": "0xb8",
+        "type": null
+      },
+      "WorldPivot": {
+        "offset": "0x0",
+        "type": "CoordinateFrame"
+      }
+    },
+    "ModuleScript": {
+      "Confidential": {
+        "offset": "0x168",
+        "type": "bool"
+      },
+      "UnrestrictedRequireAllowed": {
+        "offset": "0x138",
+        "type": "bool"
+      }
+    },
+    "Motor": {
+      "CurrentAngle": {
+        "offset": "0x170",
+        "type": "float"
+      },
+      "DesiredAngle": {
+        "offset": "0x170",
+        "type": "float"
+      },
+      "MaxVelocity": {
+        "offset": "0x170",
+        "type": "float"
+      },
+      "ReplicateCurrentAngle": {
+        "offset": "0x168",
+        "type": "float"
+      }
+    },
+    "Motor6D": {
+      "ReplicateCurrentAngle6D": {
+        "offset": "0x168",
+        "type": "Vector3"
+      },
+      "ReplicateCurrentOffset6D": {
+        "offset": "0x168",
+        "type": "Vector3"
+      }
+    },
+    "Mouse": {
+      "Icon": {
+        "offset": "0x0",
+        "type": "ContentId"
+      },
+      "IconContent": {
+        "offset": "0x0",
+        "type": "Content"
+      },
+      "TargetFilter": {
+        "offset": "0xc8",
+        "type": null
+      }
+    },
+    "NetworkSettings": {
+      "EmulatedTotalMemoryInMB": {
+        "offset": "0x148",
+        "type": "int"
+      },
+      "HttpProxyEnabled": {
+        "offset": "0x100",
+        "type": "bool"
+      },
+      "HttpProxyURL": {
+        "offset": "0x6f",
+        "type": null
+      }
+    },
+    "ObjectValue": {
+      "Value": {
+        "offset": "0xa0",
+        "type": null
+      }
+    },
+    "PVAdornment": {
+      "Adornee": {
+        "offset": "0xd8",
+        "type": null
+      }
+    },
+    "PVInstance": {
+      "Origin": {
+        "offset": "0x0",
+        "type": "CoordinateFrame"
+      },
+      "Pivot Offset": {
+        "offset": "0xb8",
+        "type": "CoordinateFrame"
+      }
+    },
+    "PackageLink": {
+      "PackageIdSerialize": {
+        "offset": "0xa0",
+        "type": "ContentId"
+      }
+    },
+    "Pants": {
+      "PantsTemplate": {
+        "offset": "0xa0",
+        "type": "ContentId"
+      },
+      "PantsTemplateContent": {
+        "offset": "0xa0",
+        "type": "Content"
+      }
+    },
+    "PartAdornment": {
+      "Adornee": {
+        "offset": "0xd8",
+        "type": null
+      }
+    },
+    "PartOperation": {
+      "AssetId": {
+        "offset": "0x2d0",
+        "type": "ContentId"
+      },
+      "Content": {
+        "offset": "0x2d0",
+        "type": "Content"
+      },
+      "ManifoldMesh_DEPRECATED": {
+        "offset": "0x350",
+        "type": "SharedString"
+      }
+    },
+    "ParticleEmitter2D": {
+      "Color": {
+        "offset": "0x158",
+        "type": "ColorSequence"
+      },
+      "TextureContent": {
+        "offset": "0x190",
+        "type": "Content"
+      }
+    },
+    "Path2D": {
+      "Closed": {
+        "offset": "0xe4",
+        "type": "bool"
+      },
+      "Color3": {
+        "offset": "0xc8",
+        "type": "Color3"
+      },
+      "SelectedControlPointData": {
+        "offset": "0xd4",
+        "type": "Path2DControlPoint"
+      },
+      "Thickness": {
+        "offset": "0xd8",
+        "type": "float"
+      },
+      "Visible": {
+        "offset": "0xe5",
+        "type": "bool"
+      },
+      "ZIndex": {
+        "offset": "0xd8",
+        "type": "int"
+      }
+    },
+    "PathfindingLink": {
+      "Attachment0": {
+        "offset": "0xb8",
+        "type": null
+      },
+      "Attachment1": {
+        "offset": "0xc8",
+        "type": null
+      }
+    },
+    "Player": {
+      "Character": {
+        "offset": "0x258",
+        "type": null
+      },
+      "PendingRequestedTool": {
+        "offset": "0x268",
+        "type": null
+      },
+      "ReplicationFocus": {
+        "offset": "0x278",
+        "type": null
+      },
+      "RespawnLocation": {
+        "offset": "0x288",
+        "type": null
+      },
+      "UserId": {
+        "offset": "0x410",
+        "type": "int64"
+      },
+      "userId": {
+        "offset": "0x410",
+        "type": "int64"
+      }
+    },
+    "PluginToolbarButton": {
+      "Icon": {
+        "offset": "0xd8",
+        "type": "ContentId"
+      },
+      "IconContent": {
+        "offset": "0xd8",
+        "type": "Content"
+      }
+    },
+    "ProceduralModel": {
+      "Generator": {
+        "offset": "0x308",
+        "type": null
+      }
+    },
+    "ProximityPrompt": {
+      "RootLocalizationTable": {
+        "offset": "0xc8",
+        "type": null
+      }
+    },
+    "RayValue": {
+      "Value": {
+        "offset": "0xb0",
+        "type": "Ray"
+      }
+    },
+    "RotationCurve": {
+      "ValuesAndTimes": {
+        "offset": "0xa0",
+        "type": "BinaryString"
+      }
+    },
+    "ScreenGui": {
+      "IgnoreGuiInset": {
+        "offset": "0x6a0",
+        "type": "bool"
+      }
+    },
+    "Scripting_DebuggerBreakpoint": {
+      "Condition": {
+        "offset": "0xbf",
+        "type": null
+      }
+    },
+    "Scripting_DebuggerWatch": {
+      "Expression": {
+        "offset": "0xcf",
+        "type": null
+      }
+    },
+    "Scripting_ScriptDebugger": {
+      "ScriptGuid": {
+        "offset": "0xa0",
+        "type": null
+      }
+    },
+    "ScrollingFrame": {
+      "AutomaticCanvasSize": {
+        "offset": "0x9a0",
+        "type": "Enums::AutomaticSize"
+      },
+      "BottomImage": {
+        "offset": "0x9a0",
+        "type": "ContentId"
+      },
+      "BottomImageContent": {
+        "offset": "0x9a0",
+        "type": "Content"
+      },
+      "CanvasSize": {
+        "offset": "0xa20",
+        "type": "UDim2"
+      },
+      "ElasticBehavior": {
+        "offset": "0x9a0",
+        "type": "Enums::ElasticBehavior"
+      },
+      "HorizontalScrollBarInset": {
+        "offset": "0x9a0",
+        "type": "Enums::ScrollBarInsetEnum::ScrollBarInset"
+      },
+      "MidImage": {
+        "offset": "0x9a0",
+        "type": "ContentId"
+      },
+      "MidImageContent": {
+        "offset": "0x9a0",
+        "type": "Content"
+      },
+      "ScrollBarImageColor3": {
+        "offset": "0xa50",
+        "type": "Color3"
+      },
+      "ScrollBarImageTransparency": {
+        "offset": "0x9a0",
+        "type": "float"
+      },
+      "ScrollBarThickness": {
+        "offset": "0x9a0",
+        "type": "int"
+      },
+      "ScrollingDirection": {
+        "offset": "0x9a0",
+        "type": "Enums::ScrollingDirection"
+      },
+      "ScrollingEnabled": {
+        "offset": "0x9a0",
+        "type": "bool"
+      },
+      "TopImage": {
+        "offset": "0x9a0",
+        "type": "ContentId"
+      },
+      "TopImageContent": {
+        "offset": "0x9a0",
+        "type": "Content"
+      },
+      "VerticalScrollBarInset": {
+        "offset": "0x9a0",
+        "type": "Enums::ScrollBarInsetEnum::ScrollBarInset"
+      },
+      "VerticalScrollBarPosition": {
+        "offset": "0x9a0",
+        "type": "Enums::VerticalScrollBarPositionEnum::VerticalScrollBarPosition"
+      }
+    },
+    "SelectionLasso": {
+      "Humanoid": {
+        "offset": "0xe0",
+        "type": null
+      }
+    },
+    "SelectionPartLasso": {
+      "Part": {
+        "offset": "0xf8",
+        "type": null
+      }
+    },
+    "Shirt": {
+      "ShirtTemplate": {
+        "offset": "0xa0",
+        "type": "ContentId"
+      },
+      "ShirtTemplateContent": {
+        "offset": "0xa0",
+        "type": "Content"
+      }
+    },
+    "ShirtGraphic": {
+      "Graphic": {
+        "offset": "0xa8",
+        "type": "ContentId"
+      },
+      "TextureContent": {
+        "offset": "0xa8",
+        "type": "Content"
+      }
+    },
+    "Sky": {
+      "MoonTextureContent": {
+        "offset": "0xa0",
+        "type": "Content"
+      },
+      "MoonTextureId": {
+        "offset": "0x98",
+        "type": "ContentId"
+      },
+      "SkyboxBackContent": {
+        "offset": "0xc8",
+        "type": "Content"
+      },
+      "SkyboxBk": {
+        "offset": "0xc8",
+        "type": "ContentId"
+      },
+      "SkyboxDn": {
+        "offset": "0xf0",
+        "type": "ContentId"
+      },
+      "SkyboxDownContent": {
+        "offset": "0xf0",
+        "type": "Content"
+      },
+      "SkyboxFrontContent": {
+        "offset": "0x118",
+        "type": "Content"
+      },
+      "SkyboxFt": {
+        "offset": "0x118",
+        "type": "ContentId"
+      },
+      "SkyboxLeftContent": {
+        "offset": "0x140",
+        "type": "Content"
+      },
+      "SkyboxLf": {
+        "offset": "0x140",
+        "type": "ContentId"
+      },
+      "SkyboxRightContent": {
+        "offset": "0x168",
+        "type": "Content"
+      },
+      "SkyboxRt": {
+        "offset": "0x168",
+        "type": "ContentId"
+      },
+      "SkyboxUp": {
+        "offset": "0x190",
+        "type": "ContentId"
+      },
+      "SkyboxUpContent": {
+        "offset": "0x190",
+        "type": "Content"
+      },
+      "SunTextureContent": {
+        "offset": "0x1b8",
+        "type": "Content"
+      },
+      "SunTextureId": {
+        "offset": "0x1b8",
+        "type": "ContentId"
+      }
+    },
+    "SlimAnimationDataEntity": {
+      "EntitySource": {
+        "offset": "0xc8",
+        "type": null
+      }
+    },
+    "Soundscape_AudioDeviceInput": {
+      "AccessList": {
+        "offset": "0x118",
+        "type": "BinaryString"
+      },
+      "Player": {
+        "offset": "0x148",
+        "type": null
+      }
+    },
+    "Soundscape_AudioDeviceOutput": {
+      "Player": {
+        "offset": "0x120",
+        "type": null
+      }
+    },
+    "Soundscape_AudioEmitter": {
+      "AngleAttenuation": {
+        "offset": "0x118",
+        "type": "BinaryString"
+      },
+      "DistanceAttenuation": {
+        "offset": "0x118",
+        "type": "BinaryString"
+      },
+      "PositionInstance": {
+        "offset": "0x120",
+        "type": null
+      }
+    },
+    "Soundscape_AudioListener": {
+      "AngleAttenuation": {
+        "offset": "0x118",
+        "type": "BinaryString"
+      },
+      "DistanceAttenuation": {
+        "offset": "0x118",
+        "type": "BinaryString"
+      },
+      "PositionInstance": {
+        "offset": "0x120",
+        "type": null
+      }
+    },
+    "Soundscape_AudioPlayer": {
+      "AssetId": {
+        "offset": "0x128",
+        "type": null
+      }
+    },
+    "Soundscape_AudioWindSynthesizer": {
+      "PositionInstance": {
+        "offset": "0x118",
+        "type": null
+      }
+    },
+    "Soundscape_CompressorSoundEffect": {
+      "SideChain": {
+        "offset": "0xe0",
+        "type": null
+      }
+    },
+    "Soundscape_Sound": {
+      "AudioContent": {
+        "offset": "0x98",
+        "type": "Content"
+      },
+      "SoundGroup": {
+        "offset": "0xc8",
+        "type": null
+      },
+      "SoundId": {
+        "offset": "0x98",
+        "type": "ContentId"
+      }
+    },
+    "Sparkles": {
+      "Color": {
+        "offset": "0xa0",
+        "type": "Color3"
+      }
+    },
+    "StarterGuiService": {
+      "StudioDefaultStyleSheet": {
+        "offset": "0x148",
+        "type": null
+      },
+      "StudioInsertWidgetLayerCollectorAutoLinkStyleSheet": {
+        "offset": "0x158",
+        "type": null
+      }
+    },
+    "StarterPlayerService": {
+      "LuaCharacterController": {
+        "offset": "0x108",
+        "type": "Enums::CharacterControlMode"
+      },
+      "PlaceAvatarRules": {
+        "offset": "0xb0",
+        "type": null
+      }
+    },
+    "StateMachineTransitionDefinition": {
+      "From": {
+        "offset": "0xb0",
+        "type": null
+      },
+      "To": {
+        "offset": "0xc0",
+        "type": null
+      }
+    },
+    "StyleQuery": {
+      "ConditionsSerialize": {
+        "offset": "0x98",
+        "type": "BinaryString"
+      }
+    },
+    "Styling_StyleDerive": {
+      "StyleSheet": {
+        "offset": "0xa0",
+        "type": null
+      }
+    },
+    "Styling_StyleLink": {
+      "StyleSheet": {
+        "offset": "0x98",
+        "type": null
+      }
+    },
+    "Styling_StyleRule": {
+      "PropertiesSerialize": {
+        "offset": "0x168",
+        "type": "BinaryString"
+      }
+    },
+    "SurfaceAppearance": {
+      "TexturePack": {
+        "offset": "0x168",
+        "type": "ContentId"
+      },
+      "TexturePackContent": {
+        "offset": "0x168",
+        "type": "Content"
+      }
+    },
+    "SurfaceGui": {
+      "ClipsDescendants": {
+        "offset": "0x788",
+        "type": "bool"
+      }
+    },
+    "SurfaceGuiBase": {
+      "Adornee": {
+        "offset": "0x698",
+        "type": null
+      }
+    },
+    "TaskSchedulerSettings": {
+      "ThreadPoolConfig": {
+        "offset": "0x0",
+        "type": "Enums::ThreadPoolConfig"
+      }
+    },
+    "TerrainDetail": {
+      "ColorMap": {
+        "offset": "0x98",
+        "type": "ContentId"
+      },
+      "MetalnessMap": {
+        "offset": "0x98",
+        "type": "ContentId"
+      },
+      "NormalMap": {
+        "offset": "0x98",
+        "type": "ContentId"
+      },
+      "RoughnessMap": {
+        "offset": "0x98",
+        "type": "ContentId"
+      },
+      "TexturePack": {
+        "offset": "0x168",
+        "type": "ContentId"
+      },
+      "TexturePackContent": {
+        "offset": "0x168",
+        "type": "Content"
+      }
+    },
+    "TerrainRegion": {
+      "ExtentsMax": {
+        "offset": "0xa4",
+        "type": "Vector3int16"
+      },
+      "ExtentsMin": {
+        "offset": "0xaa",
+        "type": "Vector3int16"
+      },
+      "SmoothGrid": {
+        "offset": "0xb0",
+        "type": "BinaryString"
+      }
+    },
+    "TextBox": {
+      "ClearTextOnFocus": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "Font": {
+        "offset": "0xdd8",
+        "type": "Text::Font"
+      },
+      "FontFace": {
+        "offset": "0xdd8",
+        "type": "Text::FontInfo"
+      },
+      "FontSize": {
+        "offset": "0xe98",
+        "type": "Enums::FontSizeEnum::FontSize"
+      },
+      "LineHeight": {
+        "offset": "0xdd8",
+        "type": "float"
+      },
+      "MaxVisibleGraphemes": {
+        "offset": "0xdd8",
+        "type": "int"
+      },
+      "MultiLine": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "OpenTypeFeatures": {
+        "offset": "0xdd8",
+        "type": null
+      },
+      "PlaceholderColor3": {
+        "offset": "0xe80",
+        "type": "Color3"
+      },
+      "PlaceholderText": {
+        "offset": "0xdd8",
+        "type": null
+      },
+      "RichText": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "ShowNativeInput": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "Text": {
+        "offset": "0xe58",
+        "type": null
+      },
+      "TextColor3": {
+        "offset": "0xe8c",
+        "type": "Color3"
+      },
+      "TextDirection": {
+        "offset": "0xdd8",
+        "type": "Text::TextDirection"
+      },
+      "TextEditable": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "TextScaled": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "TextSize": {
+        "offset": "0xdd8",
+        "type": "float"
+      },
+      "TextStrokeColor3": {
+        "offset": "0xe98",
+        "type": "Color3"
+      },
+      "TextStrokeTransparency": {
+        "offset": "0xdd8",
+        "type": "float"
+      },
+      "TextTransparency": {
+        "offset": "0xdd8",
+        "type": "float"
+      },
+      "TextTruncate": {
+        "offset": "0xdd8",
+        "type": "Enums::TextTruncateEnum::TextTruncate"
+      },
+      "TextWrap": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "TextWrapped": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "TextXAlignment": {
+        "offset": "0xdd8",
+        "type": "Enums::TextXAlignmentEnum::XAlignment"
+      },
+      "TextYAlignment": {
+        "offset": "0xdd8",
+        "type": "Enums::TextYAlignmentEnum::YAlignment"
+      }
+    },
+    "TextChannelWindow": {
+      "FontFace": {
+        "offset": "0x9b0",
+        "type": "Text::FontInfo"
+      }
+    },
+    "TextChatMessage": {
+      "PrefixText": {
+        "offset": "0x117",
+        "type": null
+      },
+      "Text": {
+        "offset": "0x1a7",
+        "type": null
+      },
+      "Translation": {
+        "offset": "0x1d7",
+        "type": null
+      }
+    },
+    "TextChatMessagePropertiesClass": {
+      "PrefixText": {
+        "offset": "0xaf",
+        "type": null
+      },
+      "Text": {
+        "offset": "0xc7",
+        "type": null
+      },
+      "Translation": {
+        "offset": "0xdf",
+        "type": null
+      }
+    },
+    "TextChatService": {
+      "ChatTranslationEnabled": {
+        "offset": "0x1e9",
+        "type": "bool"
+      },
+      "ChatTranslationFTUXShown": {
+        "offset": "0x1e9",
+        "type": "bool"
+      },
+      "ChatTranslationToggleEnabled": {
+        "offset": "0x1e9",
+        "type": "bool"
+      }
+    },
+    "TextLabel": {
+      "Font": {
+        "offset": "0xdd8",
+        "type": "Text::Font"
+      },
+      "FontFace": {
+        "offset": "0xdd8",
+        "type": "Text::FontInfo"
+      },
+      "FontSize": {
+        "offset": "0xe98",
+        "type": "Enums::FontSizeEnum::FontSize"
+      },
+      "LineHeight": {
+        "offset": "0xdd8",
+        "type": "float"
+      },
+      "MaxVisibleGraphemes": {
+        "offset": "0xdd8",
+        "type": "int"
+      },
+      "OpenTypeFeatures": {
+        "offset": "0xdd8",
+        "type": null
+      },
+      "RichText": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "Text": {
+        "offset": "0xe40",
+        "type": null
+      },
+      "TextColor3": {
+        "offset": "0xe68",
+        "type": "Color3"
+      },
+      "TextDirection": {
+        "offset": "0xdd8",
+        "type": "Text::TextDirection"
+      },
+      "TextScaled": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "TextSize": {
+        "offset": "0xdd8",
+        "type": "float"
+      },
+      "TextStrokeColor3": {
+        "offset": "0xe74",
+        "type": "Color3"
+      },
+      "TextStrokeTransparency": {
+        "offset": "0xdd8",
+        "type": "float"
+      },
+      "TextTransparency": {
+        "offset": "0xdd8",
+        "type": "float"
+      },
+      "TextTruncate": {
+        "offset": "0xdd8",
+        "type": "Enums::TextTruncateEnum::TextTruncate"
+      },
+      "TextWrap": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "TextWrapped": {
+        "offset": "0xdd8",
+        "type": "bool"
+      },
+      "TextXAlignment": {
+        "offset": "0xdd8",
+        "type": "Enums::TextXAlignmentEnum::XAlignment"
+      },
+      "TextYAlignment": {
+        "offset": "0xdd8",
+        "type": "Enums::TextYAlignmentEnum::YAlignment"
+      }
+    },
+    "TrackerLodController": {
+      "AudioMode": {
+        "offset": "0xa0",
+        "type": "TrackerLodFlagMode"
+      },
+      "VideoExtrapolationMode": {
+        "offset": "0xa4",
+        "type": "TrackerExtrapolationFlagMode"
+      },
+      "VideoLodMode": {
+        "offset": "0xa8",
+        "type": "TrackerLodValueMode"
+      },
+      "VideoMode": {
+        "offset": "0xac",
+        "type": "TrackerLodFlagMode"
+      }
+    },
+    "Trail": {
+      "Attachment0": {
+        "offset": "0x180",
+        "type": null
+      },
+      "Attachment1": {
+        "offset": "0x190",
+        "type": null
+      },
+      "Texture": {
+        "offset": "0x158",
+        "type": "ContentId"
+      },
+      "TextureContent": {
+        "offset": "0x158",
+        "type": "Content"
+      }
+    },
+    "TriangleMeshPart": {
+      "AeroMeshData": {
+        "offset": "0x168",
+        "type": "SharedString"
+      },
+      "CollisionPrecision": {
+        "offset": "0x230",
+        "type": "float"
+      },
+      "FluidFidelity": {
+        "offset": "0x168",
+        "type": "FluidFidelity"
+      },
+      "FluidFidelityInternal": {
+        "offset": "0x168",
+        "type": "FluidFidelity"
+      },
+      "PhysicalConfigData": {
+        "offset": "0x17",
+        "type": "SharedString"
+      }
+    },
+    "UIAspectRatioConstraint": {
+      "AspectRatio": {
+        "offset": "0xa8",
+        "type": "float"
+      },
+      "AspectType": {
+        "offset": "0xac",
+        "type": "Enums::AspectTypeEnum::AspectType"
+      },
+      "DominantAxis": {
+        "offset": "0xb0",
+        "type": "Enums::DominantAxisEnum::DominantAxis"
+      }
+    },
+    "UIBlur": {
+      "Color": {
+        "offset": "0xa0",
+        "type": "Color3"
+      },
+      "Enabled": {
+        "offset": "0xb4",
+        "type": "bool"
+      },
+      "Strength": {
+        "offset": "0xac",
+        "type": "UIBlurStrength"
+      },
+      "Transparency": {
+        "offset": "0xb0",
+        "type": "float"
+      }
+    },
+    "UICorner": {
+      "BottomLeftRadius": {
+        "offset": "0xa8",
+        "type": "UDim"
+      },
+      "BottomRightRadius": {
+        "offset": "0xb0",
+        "type": "UDim"
+      },
+      "CornerRadius": {
+        "offset": "0xb0",
+        "type": "UDim"
+      },
+      "TopLeftRadius": {
+        "offset": "0xb0",
+        "type": "UDim"
+      },
+      "TopRightRadius": {
+        "offset": "0xb8",
+        "type": "UDim"
+      }
+    },
+    "UIDragDetector": {
+      "ActivatedCursorIcon": {
+        "offset": "0xa8",
+        "type": "ContentId"
+      },
+      "ActivatedCursorIconContent": {
+        "offset": "0xa8",
+        "type": "Content"
+      },
+      "CursorIcon": {
+        "offset": "0xd0",
+        "type": "ContentId"
+      },
+      "CursorIconContent": {
+        "offset": "0xd0",
+        "type": "Content"
+      }
+    },
+    "UIFlexItem": {
+      "FlexMode": {
+        "offset": "0xa0",
+        "type": "Enums::UIFlexMode"
+      },
+      "GrowRatio": {
+        "offset": "0xa4",
+        "type": "float"
+      },
+      "ItemLineAlignment": {
+        "offset": "0xa8",
+        "type": "Enums::ItemLineAlignment"
+      },
+      "ShrinkRatio": {
+        "offset": "0xac",
+        "type": "float"
+      }
+    },
+    "UIGradient": {
+      "Color": {
+        "offset": "0xb0",
+        "type": "ColorSequence"
+      },
+      "Enabled": {
+        "offset": "0x130",
+        "type": "bool"
+      },
+      "Offset": {
+        "offset": "0x118",
+        "type": "Vector2"
+      },
+      "Rotation": {
+        "offset": "0x120",
+        "type": "float"
+      },
+      "Scale": {
+        "offset": "0x124",
+        "type": "float"
+      },
+      "TileMode": {
+        "offset": "0x128",
+        "type": "Enums::GradientTileModeEnum"
+      },
+      "Transparency": {
+        "offset": "0xf8",
+        "type": "NumberSequence"
+      },
+      "Type": {
+        "offset": "0x12c",
+        "type": "Enums::GradientTypeEnum"
+      }
+    },
+    "UIGridLayout": {
+      "CellPadding": {
+        "offset": "0x130",
+        "type": "UDim2"
+      },
+      "CellSize": {
+        "offset": "0x148",
+        "type": "UDim2"
+      },
+      "FillDirectionMaxCells": {
+        "offset": "0x168",
+        "type": "int"
+      },
+      "StartCorner": {
+        "offset": "0x16c",
+        "type": "Enums::StartCornerEnum::StartCorner"
+      }
+    },
+    "UIGridStyleLayout": {
+      "FillDirection": {
+        "offset": "0xe0",
+        "type": "Enums::FillDirectionEnum::FillDirection"
+      },
+      "HorizontalAlignment": {
+        "offset": "0xe4",
+        "type": "Enums::HorizontalAlignmentEnum::HorizontalAlignment"
+      },
+      "SortOrder": {
+        "offset": "0xe8",
+        "type": "Enums::SortOrderEnum::SortOrder"
+      },
+      "VerticalAlignment": {
+        "offset": "0xec",
+        "type": "Enums::VerticalAlignmentEnum::VerticalAlignment"
+      }
+    },
+    "UIListLayout": {
+      "HorizontalFlex": {
+        "offset": "0x148",
+        "type": "Enums::UIFlexAlignment"
+      },
+      "HorizontalPadding": {
+        "offset": "0x130",
+        "type": "UDim"
+      },
+      "ItemLineAlignment": {
+        "offset": "0x130",
+        "type": "Enums::ItemLineAlignment"
+      },
+      "VerticalFlex": {
+        "offset": "0x130",
+        "type": "Enums::UIFlexAlignment"
+      },
+      "VerticalPadding": {
+        "offset": "0x130",
+        "type": "UDim"
+      },
+      "Wraps": {
+        "offset": "0x130",
+        "type": "bool"
+      }
+    },
+    "UIPadding": {
+      "PaddingBottom": {
+        "offset": "0xa0",
+        "type": "UDim"
+      },
+      "PaddingLeft": {
+        "offset": "0xa8",
+        "type": "UDim"
+      },
+      "PaddingRight": {
+        "offset": "0xb0",
+        "type": "UDim"
+      },
+      "PaddingTop": {
+        "offset": "0xb8",
+        "type": "UDim"
+      }
+    },
+    "UIScale": {
+      "Scale": {
+        "offset": "0xa0",
+        "type": "float"
+      }
+    },
+    "UIShadow": {
+      "BlurRadius": {
+        "offset": "0xcc",
+        "type": "UDim"
+      },
+      "Color": {
+        "offset": "0xc0",
+        "type": "Color3"
+      },
+      "Enabled": {
+        "offset": "0xe0",
+        "type": "bool"
+      },
+      "Inset": {
+        "offset": "0xe1",
+        "type": "bool"
+      },
+      "Mode": {
+        "offset": "0xd4",
+        "type": "Enums::ApplyShadowMode"
+      },
+      "Offset": {
+        "offset": "0xa0",
+        "type": "UDim2"
+      },
+      "ShowBehindParent": {
+        "offset": "0xe2",
+        "type": "bool"
+      },
+      "Spread": {
+        "offset": "0xb0",
+        "type": "UDim2"
+      },
+      "Transparency": {
+        "offset": "0xd8",
+        "type": "float"
+      },
+      "ZIndex": {
+        "offset": "0xdc",
+        "type": "int"
+      }
+    },
+    "UISizeConstraint": {
+      "MaxSize": {
+        "offset": "0xa8",
+        "type": "Vector2"
+      },
+      "MinSize": {
+        "offset": "0xb0",
+        "type": "Vector2"
+      }
+    },
+    "UIStroke": {
+      "ApplyStrokeMode": {
+        "offset": "0xbc",
+        "type": "Enums::ApplyStrokeMode"
+      },
+      "BorderOffset": {
+        "offset": "0xb4",
+        "type": "UDim"
+      },
+      "BorderStrokePosition": {
+        "offset": "0xc0",
+        "type": "Enums::BorderStrokePosition"
+      },
+      "Color": {
+        "offset": "0xa8",
+        "type": "Color3"
+      },
+      "Enabled": {
+        "offset": "0xd8",
+        "type": "bool"
+      },
+      "LineJoinMode": {
+        "offset": "0xc4",
+        "type": "Text::LineJoinMode"
+      },
+      "StrokeSizingMode": {
+        "offset": "0xc8",
+        "type": "Enums::StrokeSizingMode"
+      },
+      "Thickness": {
+        "offset": "0xcc",
+        "type": "float"
+      },
+      "Transparency": {
+        "offset": "0xd0",
+        "type": "float"
+      },
+      "ZIndex": {
+        "offset": "0xd4",
+        "type": "int"
+      }
+    },
+    "UITextSizeConstraint": {
+      "MaxTextSize": {
+        "offset": "0xa0",
+        "type": "int"
+      },
+      "MinTextSize": {
+        "offset": "0xa4",
+        "type": "int"
+      }
+    },
+    "UnvalidatedAssetService": {
+      "CachedData": {
+        "offset": "0xb0",
+        "type": null
+      }
+    },
+    "UserInputService": {
+      "ModalEnabled": {
+        "offset": "0x136",
+        "type": "bool"
+      },
+      "MouseBehavior": {
+        "offset": "0x1f4",
+        "type": "Enums::MouseBehaviorEnum::MouseType"
+      },
+      "MouseDeltaSensitivity": {
+        "offset": "0x1ec",
+        "type": "float"
+      },
+      "MouseIcon": {
+        "offset": "0x0",
+        "type": "ContentId"
+      },
+      "MouseIconEnabled": {
+        "offset": "0x1f1",
+        "type": "bool"
+      },
+      "OverrideMouseIconBehavior": {
+        "offset": "0x1f8",
+        "type": "Enums::OverrideMouseIconBehaviorEnum::OverrideMouseIconBehavior"
+      }
+    },
+    "ValueCurve": {
+      "ValuesAndTimes": {
+        "offset": "0x10",
+        "type": "BinaryString"
+      }
+    },
+    "VideoCaptureService": {
+      "Active": {
+        "offset": "0x0",
+        "type": "bool"
+      }
+    },
+    "VideoDisplay": {
+      "ResampleMode": {
+        "offset": "0xa48",
+        "type": "Enums::ImageResampleMode"
+      }
+    },
+    "ViewportFrame": {
+      "Ambient": {
+        "offset": "0x9e8",
+        "type": "Color3"
+      },
+      "CurrentCamera": {
+        "offset": "0x9a8",
+        "type": null
+      },
+      "ImageColor3": {
+        "offset": "0x9f4",
+        "type": "Color3"
+      },
+      "ImageTransparency": {
+        "offset": "0x9a0",
+        "type": "float"
+      },
+      "LightColor": {
+        "offset": "0xa00",
+        "type": "Color3"
+      },
+      "LightDirection": {
+        "offset": "0x9a0",
+        "type": "Vector3"
+      }
+    },
+    "Wire": {
+      "SourceInstance": {
+        "offset": "0xd0",
+        "type": null
+      },
+      "TargetInstance": {
+        "offset": "0xe0",
+        "type": null
+      }
+    },
+    "Workspace": {
+      "NextGenerationReplication": {
+        "offset": "0x494",
+        "type": "Enums::RolloutState"
+      },
+      "NextGenerationReplicationAlias": {
+        "offset": "0x494",
+        "type": "Enums::RolloutState"
+      },
+      "SignalBehavior": {
+        "offset": "0x494",
+        "type": "Enums::SignalBehavior"
+      },
+      "SignalBehavior2": {
+        "offset": "0x494",
+        "type": "Enums::SignalBehavior"
+      },
+      "SignalBehaviorAlias": {
+        "offset": "0x494",
+        "type": "Enums::SignalBehavior"
+      }
+    },
+    "WorldRoot": {
+      "CollisionGroupData": {
+        "offset": "0x3b8",
+        "type": "BinaryString"
+      }
+    },
+    "WrapLayer": {
+      "ReferenceMeshId": {
+        "offset": "0x280",
+        "type": "ContentId"
+      },
+      "TemporaryReferenceId": {
+        "offset": "0x2f8",
+        "type": "ContentId"
+      },
+      "TemporaryReferenceMeshContent": {
+        "offset": "0x2f8",
+        "type": "Content"
+      }
+    }
+  }
+}

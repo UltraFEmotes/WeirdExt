@@ -509,8 +509,20 @@ shareable dump, without opening Roblox:
 
 It writes `dumps/<version>/offsets.hpp`, `offsets.cs` and `offsets.json`,
 grouped as `Namespace::Name` like common Windows dumps, with the client
-version, binary SHA-256 and dump time in the header. Only offsets the profile
-holds evidence for are exported. These are **macOS ARM64** values: struct
+version, binary SHA-256 and dump time in the header. Two sources are merged:
+
+- **Confirmed live**: the profile's offsets (probes and live use).
+- **Reflection** (`dumper/reflection.py`, offline): every property Roblox
+  registers with its reflection system has a name, a getter and a descriptor
+  whose RTTI names the class and value type. Getters that decode to an exact
+  instruction shape (a single load, a reference return, a string, a smart
+  pointer, ...) become offsets: about 2,300 properties across 360 classes for
+  0.745. Reflected values that overlap confirmed ones must match exactly or the
+  export stops. Properties read through another object (e.g. BasePart physics
+  values on the Primitive) are commented `at *(object + X) + this`.
+
+Getters that only decode heuristically go to `unverified.json` instead of the
+headers; confirm them live before relying on them. These are **macOS ARM64** values: struct
 layouts differ from the Windows client. The `SolverBody` namespace has no
 Windows equivalent: it is the physics body that actually moves a part (its
 `AssemblyLinearVelocity` in `Primitive` is a copy refreshed every step).
