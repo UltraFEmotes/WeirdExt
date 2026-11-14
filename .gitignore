@@ -12,13 +12,17 @@
 !/inspect_geometry_accessors.py
 !/inspect_movement_accessors.py
 !/inspect_physics_accessors.py
+!/update_profile.py
+!/probe_offsets.py
+!/probe_jump_velocity.py
 !/rbxl/
 !/dumper/
 !/profiles/
+!/third_party/
 
 /rbxl/*
 !/rbxl/*.py
-!/rbxl/*.swift
+!/rbxl/*.mm
 # Obsolete readers and the old third-party seed are not runtime dependencies.
 /rbxl/state.py
 /rbxl/offsets.py

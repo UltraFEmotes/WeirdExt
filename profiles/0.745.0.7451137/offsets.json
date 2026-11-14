@@ -1,20 +1,63 @@
 {
   "version": "0.745.0.7451137",
   "resolved": {
-    "Instance.Name": {"value": 104},
-    "Instance.Parent": {"value": 96},
-    "Instance.ChildrenStart": {"value": 112},
-    "Instance.ChildrenIndirect": {"value": 1},
-    "Instance.ChildrenEnd": {"value": 8},
-    "Workspace.CurrentCamera": {"value": 1112},
-    "Camera.CFrame": {"value": 184},
-    "Camera.Position": {"value": 220},
-    "Camera.FieldOfView": {"value": 288},
-    "Players.LocalPlayer": {"value": 264},
-    "Player.ModelInstance": {"value": 600},
-    "BasePart.Primitive": {"value": 360},
-    "Primitive.CFrame": {"value": 176},
-    "Primitive.Position": {"value": 212}
+    "Instance.Name": {
+      "value": 104
+    },
+    "Instance.Parent": {
+      "value": 96
+    },
+    "Instance.ChildrenStart": {
+      "value": 112
+    },
+    "Instance.ChildrenIndirect": {
+      "value": 1
+    },
+    "Instance.ChildrenEnd": {
+      "value": 8
+    },
+    "Workspace.CurrentCamera": {
+      "value": 1112
+    },
+    "Camera.CFrame": {
+      "value": 184
+    },
+    "Camera.Position": {
+      "value": 220
+    },
+    "Camera.FieldOfView": {
+      "value": 288
+    },
+    "Players.LocalPlayer": {
+      "value": 264
+    },
+    "Player.ModelInstance": {
+      "value": 600
+    },
+    "BasePart.Primitive": {
+      "value": 360
+    },
+    "Primitive.CFrame": {
+      "value": 176
+    },
+    "Primitive.Position": {
+      "value": 212
+    },
+    "Player.Team": {
+      "value": 664,
+      "method": "live probe: only Player slot pointing at a Team under Teams",
+      "confidence": 1.0
+    },
+    "Humanoid.Health": {
+      "value": 372,
+      "method": "live probe: field that tracked damage while its MaxHealth sibling stayed fixed",
+      "confidence": 1.0
+    },
+    "Humanoid.MaxHealth": {
+      "value": 396,
+      "method": "live probe: field that tracked damage while its MaxHealth sibling stayed fixed",
+      "confidence": 1.0
+    }
   },
   "evidence": {
     "static_geometry_accessors": {
@@ -30,5 +73,12 @@
     "Sanitized runtime profile: no live pointers, object names, samples or memory windows.",
     "Geometry uses the getter-backed fields from the preserved v5 report.",
     "Camera.FieldOfView uses the corroborated Camera+0x120 radian getter, not the old heuristic."
-  ]
+  ],
+  "fast_attach": {
+    "slot": 111141944,
+    "hops": [
+      1888
+    ],
+    "method": "module global chain resolved to the live DataModel"
+  }
 }

@@ -16,7 +16,7 @@ BUDGET_SECONDS = 4.0
 
 def build_tree(reader, root, max_nodes=MAX_NODES, max_depth=MAX_DEPTH,
                max_kids=MAX_KIDS, budget_seconds=BUDGET_SECONDS):
-    """Nested {name, cls, kids, truncated} dicts; dedupes by address."""
+    """Nested {name, cls, addr, parent, kids, truncated} dicts; dedupes by address."""
     started = time.monotonic()
     nodes = 0
 
@@ -27,7 +27,8 @@ def build_tree(reader, root, max_nodes=MAX_NODES, max_depth=MAX_DEPTH,
         seen.add(address)
         nodes += 1
         node = {"name": reader.name(address) or "?",
-                "cls": reader.klass(address) or "?", "kids": []}
+                "cls": reader.klass(address) or "?", "kids": [],
+                "addr": f"{address:#x}", "parent": f"{reader.pointer(address + reader.spec.parent):#x}"}
         if depth >= max_depth or nodes >= max_nodes:
             node["truncated"] = True
             return node

@@ -1,4 +1,4 @@
-"""Local collision-bit changes and edge-triggered root-PV jump boosts."""
+"""Local collision-bit changes, edge-triggered jump boosts and fly, all on the local character."""
 from dataclasses import dataclass, fields
 import json
 import math
@@ -6,9 +6,11 @@ from pathlib import Path
 import struct
 
 from .memory import MemoryFault
-from .movement import MachFieldWriter
+from .movement import MachFieldWriter, MachVectorWriter
+from .w2s import basis, basis_rows
 
 PART_CLASSES = ("RBX::Part", "RBX::MeshPart", "RBX::WedgePart")
+SOLVER_TOLERANCE = 5.0  # studs/s; one gravity step is ~3.3
 
 
 @dataclass(frozen=True)
@@ -22,6 +24,8 @@ class PhysicsSpec:
     motion_offset: int
     velocity: int
     velocity_mirror: int
+    solver_body: int | None      # Primitive -> solver body; None until probe_jump_velocity.py records it
+    solver_velocity: int | None
 
     @classmethod
     def from_evidence(cls, path: Path, digest: str):
@@ -29,18 +33,26 @@ class PhysicsSpec:
         if report.get("binary_sha256") != digest:
             raise ValueError("physics evidence belongs to a different binary")
         selected = report.get("selected", {})
-        for field in fields(cls):
-            value = selected.get(field.name)
-            rows = report.get("collision" if field.name.startswith("collision") else "velocity", [])
+        static = [field.name for field in fields(cls) if not field.name.startswith("solver")]
+        for name in static:
+            value = selected.get(name)
+            rows = report.get("collision" if name.startswith("collision") else "velocity", [])
             if (type(value) is not int or not 0 <= value <= 0x10000 or not rows
-                    or any(row.get(field.name) != value for row in rows)):
-                raise ValueError(f"missing or conflicting physics field: {field.name}")
+                    or any(row.get(name) != value for row in rows)):
+                raise ValueError(f"missing or conflicting physics field: {name}")
         mask = selected["collision_mask"]
         if not 1 <= mask <= 128 or mask & (mask - 1):
             raise ValueError("collision mask is not a single byte bit")
         if selected["velocity_mirror"] - selected["velocity"] != 72 or selected["velocity"] % 4:
             raise ValueError("unrecognized paired PV layout")
-        return cls(**{field.name: selected[field.name] for field in fields(cls)})
+        solver = report.get("solver")
+        body = solver_velocity = None
+        if solver is not None:
+            body, solver_velocity = solver.get("body_pointer"), solver.get("velocity")
+            if (type(body) is not int or type(solver_velocity) is not int or body % 8 or solver_velocity % 4
+                    or not 0 <= body <= 0x10000 or not 0 <= solver_velocity <= 0x10000):
+                raise ValueError("malformed solver body velocity evidence")
+        return cls(**{name: selected[name] for name in static}, solver_body=body, solver_velocity=solver_velocity)
 
 
 @dataclass(frozen=True)
@@ -60,6 +72,7 @@ class PhysicsController:
     def __init__(self, reader, spec: PhysicsSpec, writer=None):
         self.reader, self.spec = reader, spec
         self.writer = writer or MachFieldWriter(reader.mem)
+        self.vector_writer = MachVectorWriter(reader.mem)
         self.character = 0
         self.bindings = []
         self.root_part = None
@@ -129,8 +142,14 @@ class PhysicsController:
             if current & mask:
                 self.writer.write(address, bytes([current & ~mask]))
 
-    def _boost(self, strength):
+    def _solver(self):
+        """Validated (root Primitive, solver body) of the local assembly.
+
+        The PV pair is refreshed from the solver body every physics step, so
+        only the body's velocity changes motion mid-air."""
         reader, spec, binding = self.reader, self.spec, self.root_part
+        if spec.solver_body is None:
+            raise MemoryFault("solver body offsets not in profile; run probe_jump_velocity.py")
         if binding is None or not binding.valid(reader):
             raise MemoryFault("root part unavailable")
         assembly_ref = reader.pointer(binding.primitive + spec.primitive_assembly)
@@ -141,38 +160,72 @@ class PhysicsController:
         if (reader.klass(root) != "RBX::Primitive"
                 or not any(body.primitive == root and body.valid(reader) for body in self.bindings)):
             raise MemoryFault("local assembly root is not a known part")
-        if not math.isfinite(strength) or not 0 <= strength <= 200:
-            raise ValueError("Jump must be in 0..200")
-        addresses = [root + spec.velocity + 4, root + spec.velocity_mirror + 4]
-        original = []
         for offset in (spec.velocity, spec.velocity_mirror):
             # The paired PV blocks ARE the layout proof: CFrame at velocity-48,
             # mirror pose at mirror-48 must both decode as orthonormal frames.
             if reader.frame_at(root, offset - 48) is None:
                 raise MemoryFault("root PV layout is invalid")
-            values = struct.unpack("<3f", reader.mem.read(root + offset, 12))
-            if not all(math.isfinite(value) and abs(value) <= 1000 for value in values):
-                raise MemoryFault("root velocity is invalid")
-            original.append(struct.pack("<f", values[1]))
+        body = reader.pointer(root + spec.solver_body)
+        if not body:
+            raise MemoryFault("solver body unavailable")
+        pv = struct.unpack("<3f", reader.mem.read(root + spec.velocity, 12))
+        solved = struct.unpack("<3f", reader.mem.read(body + spec.solver_velocity, 12))
+        if not all(math.isfinite(value) and abs(value) <= 1000 for value in pv):
+            raise MemoryFault("root velocity is invalid")
+        # Structural proof: the body's velocity tracks the PV copy within one 60 Hz gravity step.
+        if not all(math.isfinite(a) and abs(a - b) <= SOLVER_TOLERANCE for a, b in zip(solved, pv)):
+            raise MemoryFault("solver body velocity does not match the part")
+        return root, body
+
+    def _velocity_targets(self, root, body):
+        spec = self.spec
+        return [body + spec.solver_velocity, root + spec.velocity, root + spec.velocity_mirror]
+
+    def _boost(self, strength):
+        if not math.isfinite(strength) or not 0 <= strength <= 200:
+            raise ValueError("Jump must be in 0..200")
+        root, body = self._solver()
+        addresses = [address + 4 for address in self._velocity_targets(root, body)]
+        original = [self.reader.mem.read(address, 4) for address in addresses]
         payload = struct.pack("<f", strength)
         try:
+            # Each write is read back by the writer; a later physics step may
+            # legitimately integrate the value, so no batch readback here.
             for address in addresses:
                 self.writer.write(address, payload)
-            if any(reader.mem.read(address, 4) != payload for address in addresses):
-                raise MemoryFault("jump boost readback changed")
         except (MemoryFault, OSError):
             for address, previous in zip(addresses, original):
                 try:
-                    if self._character() == self.character and binding.valid(reader) and reader.mem.read(address, 4) == payload:
+                    if (self._character() == self.character and self.root_part.valid(self.reader)
+                            and self.reader.mem.read(address, 4) == payload):
                         self.writer.write(address, previous)
                 except (MemoryFault, OSError):
                     pass
             raise
 
-    def tick(self, settings, inputs, now):
+    def _fly(self, settings, inputs, rotation, basis_mode):
+        """Velocity = camera-relative WASD plus Space/Shift, rewritten every tick; hover when idle."""
+        if rotation is None:
+            raise MemoryFault("camera pose unavailable")
+        right, up, back = basis_rows(rotation) if basis_mode == "rows" else basis(rotation)
+        keys = inputs.keys
+        forward = ("w" in keys) - ("s" in keys)
+        strafe = ("d" in keys) - ("a" in keys)
+        lift = ("space" in keys) - ("shift" in keys)
+        direction = [-back[axis] * forward + right[axis] * strafe + (lift if axis == 1 else 0)
+                     for axis in range(3)]
+        length = math.sqrt(sum(value * value for value in direction))
+        speed = float(settings.fly_speed)
+        velocity = [value / length * speed for value in direction] if length > 1e-6 else [0.0, 0.0, 0.0]
+        root, body = self._solver()
+        payload = struct.pack("<3f", *velocity)
+        for address in self._velocity_targets(root, body):
+            self.vector_writer.write(address, payload)
+
+    def tick(self, settings, inputs, now, camera_rotation=None, basis_mode="columns"):
         new_press = inputs.space_presses > self.space_seen
         self.space_seen = max(self.space_seen, inputs.space_presses)
-        if not settings.noclip and not settings.infinite_jump and not self.original_bits:
+        if not settings.noclip and not settings.infinite_jump and not settings.fly and not self.original_bits:
             self.noclip_failed, self.status = False, "Off"
             return
         current = self._character()
@@ -223,6 +276,17 @@ class PhysicsController:
                 notes.append(self.jump_note or "Infinite Jump ready — tap Space")
         else:
             self.jump_note = ""
+        if settings.fly:
+            if not inputs.fresh(now) or not inputs.available:
+                notes.append("Fly needs keyboard input: Allow keyboard input…")
+            elif not inputs.focused:
+                notes.append("Fly: focus Roblox")
+            else:
+                try:
+                    self._fly(settings, inputs, camera_rotation, basis_mode)
+                    notes.append("Fly on")
+                except (MemoryFault, OSError) as exc:
+                    notes.append(f"Fly paused: {exc}")
         self.status = " · ".join(notes) or "Off"
 
     def close(self):

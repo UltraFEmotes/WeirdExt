@@ -4,8 +4,8 @@
 
 **Tested on an ARM device: MacBook Neo.** This is a macOS external, not a
 Windows external, Roblox plugin, Lua executor, or injected client modification.
-Python handles process memory and session state; a locally compiled Swift/AppKit
-helper provides the overlay, settings and Explorer. A small C helper accelerates
+Python handles process memory and session state; a locally compiled Objective-C++
+helper draws the overlay, settings and Explorer with Dear ImGui on Metal. A small C helper accelerates
 object discovery. The complete release implementation is supplied as source.
 
 The main entry point is **`main.py`**. There are no bundled executables, demo
@@ -36,18 +36,25 @@ memory readback is not proof that a gameplay feature works in the live engine.
 | Component | Status |
 | --- | --- |
 | Persistent box ESP, names and distances | Working in reported live use |
+| Part-fitted boxes, skeleton, tracers, off-screen arrows | Working in reported live use |
+| Health bars, team colors / team check | Working in reported live use; offsets recorded by `probe_offsets.py` |
+| Fly | Working in reported live use; writes the solver velocity found by `probe_jump_velocity.py` |
+| Saved settings, per-feature hotkeys, Explorer property panel | Implemented |
+| Fast attach (module global chain) | Recorded and verified for the bundled profile; rejoin recovery still under investigation |
 | Native Visuals / Player / Aim settings | Implemented |
 | Explorer | Working in reported live use; snapshots refresh on request |
-| Leaving a game and joining another | Working in reported live use; background recovery remains enabled |
+| Leaving a game and joining another | **Unreliable in reported live use; under investigation** |
 | Actual camera FOV for projection | Implemented; no assumed-FOV projection fallback |
 | Camera FOV modification | Opt-in; same-binary evidence required |
 | Speed and Jump Power modification | Opt-in, experimental; Speed also updates its check field |
 | Noclip | Opt-in, experimental; direct character parts only |
-| Mouse / Camera aim methods | Implemented, experimental; hold right mouse while Roblox is focused |
-| **Infinite Jump** | **Currently broken in reported live use. Included for development, not advertised as working.** |
+| Mouse / Camera aim methods | Working in reported live use; part, priority and sticky target selectable |
+| Infinite Jump | Working in reported live use; writes the solver velocity a live probe confirmed |
 
-Movement, physics, FOV writes and aim start disabled. Settings are currently
-in-memory only: restarting the process returns them to defaults.
+Movement, physics, FOV writes, fly and aim start disabled on every launch.
+Visual, aim-tuning and keybind preferences are saved to
+`~/Library/Application Support/WeirdExt/settings.json`; features that write game
+memory are never saved.
 
 ## Supported platform and client
 
@@ -56,7 +63,7 @@ in-memory only: restarting the process returns them to defaults.
   are not supported by this release's ARM64 accessor decoder and client profile.
 - **Test hardware:** ARM-based **MacBook Neo**.
 - **Python:** 3.11 or newer; Python **3.14** is the recommended environment.
-- **Native tools:** Swift compiler, Clang and the macOS SDK from Xcode Command
+- **Native tools:** Clang/Clang++ and the macOS SDK from Xcode Command
   Line Tools, plus macOS's built-in `codesign`.
 - **Python dependency:** NumPy; see [`requirements.txt`](requirements.txt).
 - **Roblox client profile:** `0.745.0.7451137` only.
@@ -73,8 +80,8 @@ still launches normally. Compiling WeirdExt again does **not** update offsets.
 There is no automatic compatibility with arbitrary current or future clients.
 
 The MacBook Neo statement describes the project's reported hardware testing,
-not verification of every feature on every macOS release. Infinite Jump remains
-broken, and the other experimental write features need additional live validation.
+not verification of every feature on every macOS release. The experimental
+write features, including Infinite Jump and Fly, need additional live validation.
 
 ## Install
 
@@ -91,14 +98,12 @@ will say so. Verify the selected toolchain:
 
 ```sh
 xcode-select -p
-xcrun --find swiftc
 xcrun --find clang
-swiftc --version
 clang --version
 ```
 
 The full Xcode application is not required when Command Line Tools supplies a
-working Swift compiler and macOS SDK. Install matching tools after a macOS update
+working Clang and macOS SDK. Install matching tools after a macOS update
 if the SDK or compiler stops working.
 
 ### 2. Install a native Python
@@ -156,16 +161,17 @@ This command does not attach to Roblox or launch the GUI. It:
 
 1. Requires native ARM64 macOS and Python 3.11+.
 2. Compiles the Python sources in memory to detect syntax errors.
-3. Typechecks `rbxl/esp_overlay.swift` in Swift 5 language mode.
+3. Typechecks `rbxl/overlay.mm` with Clang++ (`-Wall -Wextra`).
 4. Checks the C sweeper with Clang's syntax checker.
 5. Loads the bundled runtime profile and checks matching camera/movement/physics
    evidence and field constraints.
-6. Compiles the Swift helper with optimization and packages it as
+6. Compiles the overlay helper and the vendored Dear ImGui sources with
+   optimization and packages them as
    `WeirdExt.app`.
 7. Applies a local ad-hoc code signature using `codesign`.
 8. Builds the C sweeper and prints the output paths.
 
-The Swift app is cached at:
+The overlay app is cached at:
 
 ```text
 .weirdext-native/<source-and-compiler-hash>/WeirdExt.app
@@ -190,8 +196,8 @@ this release. Run `build.py --check` when changing the source.
 
 ### What must be compiled?
 
-Python remains source interpreted by your selected interpreter. Swift and C are
-the only native compilation steps. There is no Node, Electron, CMake, Visual
+Python remains source interpreted by your selected interpreter. Objective-C++ and C
+are the only native compilation steps. There is no Node, Electron, CMake, Visual
 Studio, private SDK, paid dependency or remote compilation service.
 
 For reference, the C compiler command is:
@@ -200,7 +206,7 @@ For reference, the C compiler command is:
 clang -O2 -o dumper/sweepc dumper/sweepc.c
 ```
 
-Use `build.py` for the Swift helper rather than compiling a loose executable:
+Use `build.py` for the overlay helper rather than compiling a loose executable:
 the app bundle, signature and manifest are part of its macOS permission identity.
 
 The launcher also builds missing/outdated native helpers automatically. Building
@@ -225,11 +231,13 @@ The Python process requests a Mach task port for external memory access. Under
 `SUDO_UID`; the helper is not given a task port. Do not launch from a root login
 shell with no graphical console user and expect normal macOS permission behavior.
 
-On startup, the settings panel opens and a **WE** menu appears in the macOS menu
-bar. Enable features from the settings panel, then focus Roblox again. Closing
-the settings panel hides it; **WE → Settings…** reopens it.
+On startup, the ImGui menu opens over the game and a **WE** item appears in the
+macOS menu bar. Press **Right Shift** (with Roblox or the menu focused) or use
+**WE → Toggle Menu** to show and hide it. Closing the menu hands focus straight
+back to Roblox. While the menu is open it takes the mouse, so close it to play.
+Right Shift detection from inside Roblox needs Input Monitoring.
 
-The transparent overlay is click-through and tracks the Roblox window even when
+With the menu closed, the transparent overlay is click-through and tracks the Roblox window even when
 Roblox is not the foreground application. Aim input remains focus-gated.
 
 ### Stop
@@ -262,10 +270,9 @@ does not post those mouse-movement events.
 
 In **Player**, press **Allow keyboard input…**. If macOS requests it, enable
 WeirdExt in **Privacy & Security → Input Monitoring**, then restart WeirdExt.
-The helper relays focus state, right-mouse hold and cumulative Space presses.
-
-Granting input permission does **not** fix Infinite Jump's known live behavior.
-It only permits the keyboard relay to observe the input needed by that feature.
+The helper relays focus state, right-mouse hold, cumulative Space presses and
+the Fly keys (W, A, S, D, Space, Left Shift), and polls Right Shift and your
+bound hotkeys. Without this permission those keys are not seen.
 
 ### Window discovery / Screen Recording
 
@@ -283,11 +290,18 @@ locally ad-hoc signed, not Developer ID notarized.
 ### Visuals
 
 - **ESP**, **Boxes**, **Names**, **Distance**: control visible target markers.
+  Boxes are fitted to the character's projected head, hands and feet; the
+  **Fallback height / width** sliders apply only when no limbs are readable.
+- **Skeleton**: lines between R15 or R6 body parts (reads every part, so it
+  costs more per frame than boxes alone).
+- **Tracers**: lines from the bottom center to each box.
+- **Off-screen arrows**: edge arrows toward players outside the view or behind you.
+- **Health bars** and team colors need `Humanoid.Health/MaxHealth` and
+  `Player.Team` in the profile; see [Updating client profiles](#updating-client-profiles).
+- **Hide teammates**: drops players on your team from ESP and from aim.
 - **Center mark**: marks overlay center; it is not proof that camera offsets are
   correct.
 - **Show me**: includes the local player.
-- **Height / Width**: control fixed-height body-box estimates, not exact avatar
-  mesh bounds.
 - **Update rate**: sampling target between 1 and 60 Hz. Native drawing targets
   60 Hz; actual sampling/delivery rates are reported separately.
 - **Change FOV**: opt-in game-camera FOV write. Projection always uses the
@@ -300,27 +314,44 @@ locally ad-hoc signed, not Developer ID notarized.
   the same feature as Infinite Jump.
 - **Noclip**: clears the collision bit on validated direct character parts.
   Nested accessory/tool handles are not comprehensively traversed.
-- **Infinite Jump**: retained experimental Space-triggered velocity-write path;
-  **currently nonfunctional in reported live use**. The Jump slider supplies
-  its requested boost strength. Do not interpret “Jump boost” as observed
-  movement; it currently means the memory transaction passed its readback.
+- **Infinite Jump**: on each Space press in the air, writes the Jump value into
+  the physics solver's velocity for your character (plus its two mirrors).
+  The mirrors alone are overwritten by the next physics step.
+- **Fly**: every tick sets the same solver velocity from the camera: WASD moves
+  along the view, Space rises, Left Shift sinks, no keys hovers. **Fly speed**
+  sets studs per second. Needs Input Monitoring for the keys.
 
 ### Aim
 
 Enable **Aimbot**, choose **Mouse** or **Camera**, set **Radius** and
 **Smoothness**, focus Roblox and hold the right mouse button.
 
-Both methods select body targets from the reader's current frame. Mouse mode
-uses bounded smoothed deltas and requires Accessibility. Camera mode writes
-rotation only, with quaternion interpolation; camera translation is not written.
-Custom camera scripts, stale state, missing permission and game behavior can
-prevent either experimental method from producing the intended result.
+- **Part**: Head, Torso, or Closest (the visible part nearest the crosshair).
+- **Priority**: Crosshair (nearest on screen) or Distance (nearest in the world),
+  always within the radius.
+- **Sticky target**: keeps the current target for the whole right-mouse hold
+  while it stays inside the radius.
+- Dead players (health 0, when health is in the profile) are skipped, and
+  **Hide teammates** also skips teammates.
+
+Mouse mode uses bounded smoothed deltas and requires Accessibility. Camera mode
+writes rotation only, with quaternion interpolation; camera translation is not
+written. Custom camera scripts, stale state, missing permission and game
+behavior can prevent either experimental method from producing the intended result.
+
+### Keys
+
+Click a feature in the **Keys** tab and press a key to bind it; **Esc** clears the
+binding. Bound keys toggle ESP, Aimbot, Fly, Noclip, Infinite Jump or Speed
+while Roblox is focused. **Right Shift** always toggles the menu. Bindings are
+saved with your settings.
 
 ### Explorer
 
-Open **WE → Explorer…**. Opening it requests one bounded, read-only tree
-snapshot. Use the search field to filter it and **Refresh** to request a new
-snapshot. Expanding a node does not start continuous full-tree refreshes.
+Open **WE → Explorer…** or the **Explorer** tab. Opening it requests one bounded,
+read-only tree snapshot. Use the search field to filter it and **Refresh** to
+request a new snapshot. Click a node to see its name, class, address, parent
+address and child count; **Copy** puts a value on the clipboard.
 
 Snapshots are capped at 2,000 nodes, depth 8, 64 children per node and a four-second
 budget. Large trees can be truncated. Snapshot construction can briefly reduce
@@ -351,15 +382,12 @@ Run `.venv/bin/python main.py --help` for the authoritative option list.
 | --- | --- |
 | `--fps 60` | Sampling target, 1–60 Hz |
 | `--pid 1234` | Initial Roblox PID; otherwise select the largest matching client process |
-| `--report PATH` | Runtime offset report; bundled `profiles/0.745.0.7451137/offsets.json` by default |
-| `--camera-evidence PATH` | Matching Camera getter evidence |
-| `--movement-evidence PATH` | Matching movement getter evidence |
-| `--physics-evidence PATH` | Matching collision/assembly-PV evidence |
+| `--profile DIR` | Profile directory; default: the one under `profiles/` whose SHA-256 matches the installed RobloxPlayer |
 | `--diagnostics` | Verbose per-target camera/projection diagnostics |
 | `--inset-top 28` | Initial windowed inset, 0–100 points |
 | `--show-local` | Initially include the local player |
-| `--box-height 5.4` | Estimated box height, 1–20 studs |
-| `--box-ratio 0.6` | Width/height ratio, 0.2–2 |
+| `--box-height 5.4` | Fallback box height when no limbs are readable, 1–20 studs |
+| `--box-ratio 0.6` | Fallback width/height ratio, 0.2–2 |
 | `--headless` | No native UI/overlay; print projected state |
 | `--seconds 10` | Stop after this many seconds of the polling loop; 0 runs until stopped |
 | `--width 1280 --height 720` | Positive headless/fallback viewport dimensions |
@@ -400,66 +428,40 @@ about the connection, not a claim that every experimental write feature works.
 
 ## Updating client profiles
 
-**Advanced maintenance:** the supplied profile targets one exact binary.
-Roblox updates may require changes to the decoder as well as new numbers.
-Never change only the stored digest to bypass a mismatch.
-
-Inspect the installed ARM64 executable's hash:
+`main.py` picks the profile under `profiles/` whose recorded SHA-256 matches the
+installed `/Applications/Roblox.app/Contents/MacOS/RobloxPlayer`. After a Roblox
+update, join a game and build a new one:
 
 ```sh
-shasum -a 256 /Applications/Roblox.app/Contents/MacOS/RobloxPlayer
+sudo "$PWD/.venv/bin/python" "$PWD/update_profile.py"
 ```
 
-Offline accessor tools read the executable file without opening a task port.
-Create a new local output directory and generate evidence:
+It reads geometry, camera, movement and physics getters from the binary
+offline, runs one live discovery for the instance layout, writes
+`profiles/<version>-<sha8>/`, and validates it with the same loaders `main.py`
+uses. It never overwrites a profile. It then looks for a global in the client's
+data segments that leads to the live DataModel within two pointer hops,
+attaches through it to prove it, and records it as `fast_attach`. Run against a
+client that already has a matching profile, it adds only that chain. With
+**fast attach**, attaching takes a few reads instead of a ~50 s heap sweep; if
+the chain ever stops resolving, attach falls back to the sweep.
+
+Live-only fields come from their own probes, run in a game (each writes into
+the matching profile only when exactly one candidate survives):
 
 ```sh
-WORKDIR="generated/$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$WORKDIR"
-.venv/bin/python inspect_geometry_accessors.py --json "$WORKDIR/geometry.json"
-.venv/bin/python inspect_camera_accessors.py --json "$WORKDIR/camera.json"
-.venv/bin/python inspect_movement_accessors.py --json "$WORKDIR/movement.json"
-.venv/bin/python inspect_physics_accessors.py --json "$WORKDIR/physics.json"
+sudo "$PWD/.venv/bin/python" "$PWD/probe_jump_velocity.py"   # solver velocity: Infinite Jump, Fly
+sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" team     # Player.Team: team colors, team check
+sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" health   # Humanoid.Health/MaxHealth: health bars
 ```
 
-Each tool accepts an optional positional executable path. The default is the
-RobloxPlayer path above. A nonzero exit code means it did not recover a unique
-supported result; inspect the evidence rather than treating the output as valid.
-`--json` outputs use exclusive creation and refuse to overwrite an existing file.
+`probe_jump_velocity.py` writes to candidate memory during falls; use a
+throwaway server. `probe_offsets.py health` asks you to take damage a few times.
 
-For a new live structural report, load a game first and run:
-
-```sh
-sudo "$PWD/.venv/bin/python" "$PWD/dump_offsets.py" \
-  --skip-renderer \
-  --out "$WORKDIR/offsets.py" \
-  --json "$WORKDIR/offsets.json" \
-  --verbose
-```
-
-This performs live reads and broad discovery. Avoid repeatedly running it during
-loading/teardown: previous development runs disrupted the client. The report
-distinguishes heuristic candidates from getter-backed fields and can leave
-unsupported fields unresolved. The old seed table is neither needed nor bundled.
-
-The runtime requires matching SHA-256 identities, a supported pointer-to-vector
-children layout, consistent geometry, Camera getters and reciprocal services.
-Review all evidence before trying a new profile:
-
-```sh
-sudo "$PWD/.venv/bin/python" "$PWD/main.py" \
-  --report "$WORKDIR/offsets.json" \
-  --camera-evidence "$WORKDIR/camera.json" \
-  --movement-evidence "$WORKDIR/movement.json" \
-  --physics-evidence "$WORKDIR/physics.json"
-```
-
-Leave write features off while validating a newly derived build. Local reports
-can contain process addresses, object information and memory-derived samples;
-do not publish them wholesale. The checked-in `profiles/` files are sanitized
-runtime summaries with no live object pointers or captured memory windows.
-The decoder source is included so maintainers can reproduce and inspect the
-underlying field derivation against their own installed client.
+The lower-level tools remain for inspection: `inspect_*_accessors.py` (offline,
+`--json` never overwrites) and `dump_offsets.py` (live structural report).
+Leave write features off while validating a new build. Local reports can contain
+process addresses and memory-derived samples; do not publish them wholesale.
 
 ## Troubleshooting
 
@@ -472,9 +474,10 @@ change machine security settings based on assumptions about this error.
 
 ### `installed binary differs from offset report`
 
-The installed executable does not match the supported profile. Check its hash.
-Rebuilding the Swift/C helpers cannot solve a client-version mismatch; maintain
-a properly derived compatible profile or wait for one.
+The installed executable does not match the selected profile. Rebuilding the
+native helpers cannot solve a client-version mismatch; run `update_profile.py`
+(see [Updating client profiles](#updating-client-profiles)). `no profile matches
+the installed Roblox` at startup means the same thing.
 
 ### Discovery reports no loaded session / no self-named instance
 
@@ -491,17 +494,17 @@ window-availability messages. Use `--diagnostics`, `inset`, `pos` and `basis`
 controls to investigate alignment. A center mark aligned to the crosshair does
 not prove the camera/geometry profile is correct.
 
-### Infinite Jump still does nothing
+### Infinite Jump or Fly does nothing
 
-This is a **known unresolved issue**, not a setup step guaranteed to fix it.
-Useful `[physics]` messages distinguish missing keyboard input, missing Input
-Monitoring, lost focus and a rejected memory transaction. Even `Jump boost
-(Space #...)` only establishes immediate memory readback, not that the engine
-consumed the velocity or produced a jump. Include that status when reporting it.
+`[physics]` messages distinguish missing keyboard input, missing Input
+Monitoring, lost focus and a refused write. `solver body offsets not in profile`
+means the profile lacks the solver entry: run `probe_jump_velocity.py`.
+`solver body velocity does not match the part` means the recorded solver offset
+no longer tracks this build; rerun the probe.
 
 ### Native cache integrity error / permission prompts return
 
-Cached executables are verified. Do not modify them in place. Change the Swift
+Cached executables are verified. Do not modify them in place. Change the overlay
 source and build normally to produce a new cache identity, or identify the
 specific damaged cache entry before removing it and rebuilding. A new helper
 path/signature may need a new permission approval. Do not recursively delete the
@@ -527,7 +530,8 @@ sudo "$PWD/.venv/bin/python" "$PWD/main.py"
 
 Movement, physics and FOV controls require matching evidence and supported
 objects. Disabled controls can indicate a missing controller/evidence file.
-Settings are not persisted; a restart intentionally restores default toggles.
+Features that write game memory always start off; preferences and keybinds are
+restored from `~/Library/Application Support/WeirdExt/settings.json`.
 
 ## Source layout and architecture
 
@@ -536,8 +540,9 @@ main.py                         Main launcher, controls and frame/session loop
 build.py                        Local build and static/profile validation
 requirements.txt                NumPy dependency
 rbxl/
-  esp_overlay.swift             Native overlay, settings, input and Explorer UI
-  native_build.py               Content-addressed Swift app build/signing
+  overlay.mm                    ImGui/Metal overlay, menu, hotkeys, saved settings, Explorer
+  profiles.py                   Profile selection by installed binary SHA-256
+  native_build.py               Content-addressed overlay app build/signing
   memory.py                     Mach reads, process selection, task-port lifecycle
   esp_reader.py                 ESPReader, ownership checks and fresh snapshots
   esp_settings.py               Strict shared settings contract
@@ -545,7 +550,7 @@ rbxl/
   aim.py, camera_aim.py          Target selection and Camera aim
   camera_control.py             Opt-in camera FOV writes/restoration
   movement.py                   Paired Speed/check and JumpPower transactions
-  physics_control.py            Noclip and currently broken Infinite Jump path
+  physics_control.py            Noclip, Infinite Jump and Fly (solver velocity writes)
   input_state.py                Input validation and receiver-clock freshness
   session.py                    Session health, worker recovery and roster feed
   explorer.py                   Bounded read-only tree snapshots
@@ -557,8 +562,12 @@ dumper/
   prims.py, snapshots.py         Structural and sample-validation helpers
   emit.py                       New report/table output
 dump_offsets.py                 Live structural report CLI
+update_profile.py               Build/extend a profile for the installed client
+probe_jump_velocity.py          Live probe: solver velocity for Infinite Jump/Fly
+probe_offsets.py                Live probe: Player.Team, Humanoid.Health/MaxHealth
 inspect_*_accessors.py           Offline executable inspection CLIs
 profiles/0.745.0.7451137/         Sanitized version/hash-bound runtime summaries
+third_party/imgui/              Vendored Dear ImGui v1.92.9b (MIT) + osx/metal backends
 LICENSE                         MIT license
 THIRD_PARTY.md                  Dependencies and research references
 ```

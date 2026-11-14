@@ -70,6 +70,11 @@ class MachRotationWriter(MachFieldWriter):
     allowed_sizes = (36,)
 
 
+class MachVectorWriter(MachFieldWriter):
+    """Exactly three float32 values: one velocity vector."""
+    allowed_sizes = (12,)
+
+
 class MovementController:
     """Single polling-thread owner. Disabled by default; no pose or task-port discovery."""
     def __init__(self, reader, spec: MovementSpec, writer=None):

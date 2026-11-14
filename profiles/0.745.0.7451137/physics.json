@@ -11,19 +11,32 @@
     "velocity": 224,
     "velocity_mirror": 296
   },
-  "collision": [{"collision_flags": 446, "collision_mask": 8}],
-  "velocity": [{
-    "primitive_assembly": 72,
-    "assembly_adjustment": 16,
-    "assembly_root": 64,
-    "root_adjustment": 16,
-    "motion_offset": 104,
-    "velocity": 224,
-    "velocity_mirror": 296
-  }],
+  "collision": [
+    {
+      "collision_flags": 446,
+      "collision_mask": 8
+    }
+  ],
+  "velocity": [
+    {
+      "primitive_assembly": 72,
+      "assembly_adjustment": 16,
+      "assembly_root": 64,
+      "root_adjustment": 16,
+      "motion_offset": 104,
+      "velocity": 224,
+      "velocity_mirror": 296
+    }
+  ],
   "limitations": [
-    "Infinite Jump is currently nonfunctional in reported live use.",
-    "This summary establishes fields and layouts, not engine acceptance.",
-    "External writes bypass contact notifications, wakeups and PV dirty counters."
-  ]
+    "Infinite Jump writes the solver body velocity; validated by the live probe, pending gameplay confirmation."
+  ],
+  "solver": {
+    "body_pointer": 320,
+    "velocity": 164,
+    "evidence": [
+      "Live probe 2026-11-15: a +50 Y write at *(Primitive+0x140)+0xa4 during free fall moved the Primitive PV Y to +40.19, +40.19 and +39.37 after 50 ms (3/3).",
+      "Mid-air writes to the Primitive PV pair alone were reverted within one physics step."
+    ]
+  }
 }
