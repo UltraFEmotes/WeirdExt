@@ -4,6 +4,7 @@ import json
 import math
 from pathlib import Path
 import struct
+import time
 
 from .memory import MemoryFault
 from .movement import MachFieldWriter, MachVectorWriter
@@ -26,6 +27,8 @@ class PhysicsSpec:
     velocity_mirror: int
     solver_body: int | None      # Primitive -> solver body; None until probe_jump_velocity.py records it
     solver_velocity: int | None
+    solver_positions: tuple[int, ...] = ()  # float position copies; recorded by probe_offsets.py teleport
+    solver_position_hold: bool = False       # re-assert the move for ~50 ms
 
     @classmethod
     def from_evidence(cls, path: Path, digest: str):
@@ -47,12 +50,18 @@ class PhysicsSpec:
             raise ValueError("unrecognized paired PV layout")
         solver = report.get("solver")
         body = solver_velocity = None
+        positions, hold = (), False
         if solver is not None:
             body, solver_velocity = solver.get("body_pointer"), solver.get("velocity")
+            positions, hold = tuple(solver.get("positions", ())), solver.get("position_hold", False)
+            if (type(hold) is not bool or len(positions) > 8
+                    or any(type(offset) is not int or offset % 4 or not 0 <= offset <= 0x10000 for offset in positions)):
+                raise ValueError("malformed solver position evidence")
             if (type(body) is not int or type(solver_velocity) is not int or body % 8 or solver_velocity % 4
                     or not 0 <= body <= 0x10000 or not 0 <= solver_velocity <= 0x10000):
                 raise ValueError("malformed solver body velocity evidence")
-        return cls(**{name: selected[name] for name in static}, solver_body=body, solver_velocity=solver_velocity)
+        return cls(**{name: selected[name] for name in static}, solver_body=body, solver_velocity=solver_velocity,
+                   solver_positions=positions, solver_position_hold=hold)
 
 
 @dataclass(frozen=True)
@@ -202,6 +211,43 @@ class PhysicsController:
                 except (MemoryFault, OSError):
                     pass
             raise
+
+    def teleport(self, destination, now):
+        """Move every solver position copy and both pose copies by the same offset; zero velocity.
+
+        The engine trusts different copies in different states, so all move together."""
+        if not self.spec.solver_positions:
+            raise MemoryFault("solver positions not in profile; run probe_offsets.py teleport")
+        if not all(math.isfinite(value) and abs(value) <= 1e6 for value in destination):
+            raise ValueError("teleport destination is not a finite world position")
+        current = self._character()
+        if not current:
+            raise MemoryFault("local character unavailable")
+        if current != self.character or self.root_part is None:
+            self.character = current
+            self._scan(now)
+        root, body = self._solver()
+        mem = self.reader.mem
+        part = struct.unpack("<3f", mem.read(root + self.spec.velocity - 12, 12))
+        shift = [destination[axis] - part[axis] for axis in range(3)]
+        self._shift(root, body, shift)
+        for address in self._velocity_targets(root, body):
+            self.vector_writer.write(address, struct.pack("<3f", 0.0, 0.0, 0.0))
+        if self.spec.solver_position_hold:
+            # Re-assert for ~50 ms so a physics step cannot restore an old copy in between.
+            for _ in range(3):
+                time.sleep(0.016)
+                part = struct.unpack("<3f", mem.read(root + self.spec.velocity - 12, 12))
+                remaining = [destination[axis] - part[axis] for axis in range(3)]
+                if max(abs(value) for value in remaining) > 0.5:
+                    self._shift(root, body, remaining)
+
+    def _shift(self, root, body, shift):
+        mem = self.reader.mem
+        for address in ([body + offset for offset in self.spec.solver_positions]
+                        + [root + self.spec.velocity - 12, root + self.spec.velocity_mirror - 12]):
+            values = struct.unpack("<3f", mem.read(address, 12))
+            self.vector_writer.write(address, struct.pack("<3f", *(values[axis] + shift[axis] for axis in range(3))))
 
     def _fly(self, settings, inputs, rotation, basis_mode):
         """Velocity = camera-relative WASD plus Space/Shift, rewritten every tick; hover when idle."""

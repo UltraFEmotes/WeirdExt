@@ -39,6 +39,8 @@ class OffsetSpec:
     humanoid_health: int | None = None
     humanoid_max_health: int | None = None
     player_team: int | None = None
+    camera_subject: int | None = None  # Camera smart pointer (object, control block)
+    weak_this: int | None = None       # every Instance's own (self, control block) pair
     fast_slot: int | None = None   # module-relative global that leads to the DataModel
     fast_hops: tuple[int, ...] = ()  # pointer offsets followed from that global
 
@@ -105,7 +107,8 @@ class OffsetSpec:
                    value("Player.ModelInstance"), primitive, frame, value("Workspace.CurrentCamera"),
                    camera_frame, optional("Players.LocalPlayer"), digest, optional("Camera.FieldOfView"),
                    humanoid_health=health[0], humanoid_max_health=health[1],
-                   player_team=optional("Player.Team"),
+                   player_team=optional("Player.Team"), camera_subject=optional("Camera.CameraSubject"),
+                   weak_this=optional("Instance.WeakThis"),
                    fast_slot=fast["slot"] if fast else None, fast_hops=tuple(fast["hops"]) if fast else ())
 
 

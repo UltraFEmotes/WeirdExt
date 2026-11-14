@@ -28,7 +28,7 @@ from rbxl.esp_reader import ESPReader, OffsetSpec
 from rbxl.memory import MemoryFault, find_roblox_pid
 from rbxl.movement import MachFieldWriter
 from rbxl.physics_control import PhysicsController, PhysicsSpec
-from rbxl.profiles import select_profile
+from rbxl.profiles import select_profile, write_json
 from dumper import prims
 
 FALLING = -8.0            # studs/s; below this the Humanoid is airborne
@@ -183,7 +183,7 @@ def main():
     report["solver"] = {"body_pointer": body_pointer, "velocity": velocity,
                         "evidence": [f"probe_jump_velocity.py: +{BOOST:g} Y write during free fall followed "
                                      f"{1 + CONFIRMATIONS}/{1 + CONFIRMATIONS} times"]}
-    path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    write_json(path, report)
     print(f"[probe] recorded solver body_pointer {body_pointer:#x}, velocity {velocity:#x} in {path}", flush=True)
     return 0
 

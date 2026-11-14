@@ -32,6 +32,7 @@ from rbxl.input_state import InputState
 from rbxl.movement import MovementController, MovementSpec
 from rbxl.physics_control import PhysicsController, PhysicsSpec
 from rbxl.session import SessionHealth, SessionRecovery, SessionWatcher
+from rbxl.spectate import SpectateController
 from rbxl.native_build import build_overlay
 from rbxl.profiles import select_profile
 from rbxl.memory import MemoryFault, find_roblox_pid
@@ -60,10 +61,10 @@ def display_packet(frame: Frame, fov: float, viewport, settings: Settings, basis
         raise ValueError("mode must be 'columns' or 'rows'")
     targets, offscreen = [], []
     boresight = {"x": 0.5, "y": 0.5}
+    teams = sorted({target.team for target in frame.targets if target.team})
     if frame.rotation is not None and frame.position is not None:
         cframe = (frame.rotation, frame.position)
         right, up, _ = basis_rows(frame.rotation) if basis_mode == "rows" else basis(frame.rotation)
-        teams = sorted({target.team for target in frame.targets if target.team})
 
         def screen(world):
             return project(cframe, fov, viewport, world, basis_mode)
@@ -124,8 +125,56 @@ def display_packet(frame: Frame, fov: float, viewport, settings: Settings, basis
             targets.append({"name": target.name, "x": x, "y": y, "w": w, "h": h,
                             "target_index": target_index, "distance": distance, "bones": bones,
                             "health": health, "team": team, "teammate": teammate})
-    return {"targets": targets, "offscreen": offscreen, "status": frame.status,
+    players = []
+    if frame.local_position is not None:
+        for target in frame.targets:
+            if target.is_local:
+                continue
+            health = (min(max(target.health / target.max_health, 0.0), 1.0)
+                      if target.health is not None and target.max_health else None)
+            players.append({"key": target.address, "name": target.name, "health": health,
+                            "distance": math.dist(frame.local_position, target.position),
+                            "team": teams.index(target.team) + 1 if target.team else 0,
+                            "teammate": bool(target.team) and target.team == frame.local_team})
+        players.sort(key=lambda player: player["distance"])
+    return {"targets": targets, "offscreen": offscreen, "players": players, "status": frame.status,
             "roster": frame.roster_count, "fov": fov, "boresight": boresight, "complete": frame.complete}
+
+
+PLAYER_ACTIONS = ("teleport", "spectate", "stop_spectate")
+TELEPORT_LIFT = 3.0  # studs above the target's root so you land beside, not inside, them
+
+
+def build_spectate(reader):
+    try:
+        return SpectateController(reader), "Not spectating"
+    except ValueError as exc:
+        return None, f"Spectate unavailable: {exc}"
+
+
+def run_player_action(action, key, frame, physics, spectate, now):
+    """One Players-tab request; returns the status line shown under the list."""
+    if action == "stop_spectate":
+        if spectate is None:
+            return "Spectate unavailable"
+        spectate.stop()
+        return spectate.status
+    target = next((target for target in frame.targets if target.address == key and not target.is_local), None)
+    if target is None:
+        return "That player is no longer readable"
+    try:
+        if action == "teleport":
+            if physics is None:
+                return "Teleport unavailable: physics evidence missing"
+            x, y, z = target.position
+            physics.teleport((x, y + TELEPORT_LIFT, z), now)
+            return f"Teleported to {target.name}"
+        if spectate is None:
+            return "Spectate unavailable: run probe_offsets.py subject"
+        spectate.start(target.address, target.name)
+        return spectate.status
+    except (MemoryFault, OSError, ValueError) as exc:
+        return f"{action.title()} failed: {exc}"
 
 
 class UpdateStats:
@@ -167,6 +216,7 @@ class Overlay:
         self.quit_requested = False
         self.pending_input = None
         self.pending_explorer = False
+        self.pending_actions = []
         command = [str(executable), str(pid)]
         command.append(str(inset_top))
         environment, options = helper_identity()
@@ -203,6 +253,12 @@ class Overlay:
                 if event.get("type") == "explorer_refresh":
                     with self.lock:
                         self.pending_explorer = True
+                    continue
+                if event.get("type") == "player_action":
+                    if event.get("action") not in PLAYER_ACTIONS or type(event.get("key")) is not int:
+                        raise ValueError("invalid player action")
+                    with self.lock:
+                        self.pending_actions.append((event["action"], event["key"]))
                     continue
                 size = float(event["width"]), float(event["height"])
                 if all(math.isfinite(value) and value > 0 for value in size):
@@ -249,6 +305,11 @@ class Overlay:
         with self.lock:
             state, self.pending_input = self.pending_input, None
         return state
+
+    def take_actions(self):
+        with self.lock:
+            actions, self.pending_actions = self.pending_actions, []
+        return actions
 
     def take_explorer(self):
         with self.lock:
@@ -481,8 +542,8 @@ def build_controllers(reader, args, spec):
             physics, physics_status, camera_aim)
 
 
-def close_controllers(camera_control, movement, physics):
-    for controller in (camera_control, physics, movement):
+def close_controllers(camera_control, movement, physics, spectate=None):
+    for controller in (spectate, camera_control, physics, movement):
         if controller is not None:
             try:
                 controller.close()
@@ -496,6 +557,8 @@ def main(argv=None):
     camera_control = None
     physics = None
     camera_aim = None
+    spectate = None
+    player_status = "Not spectating"
     reader = None
     recovery = None
     try:
@@ -530,6 +593,7 @@ def main(argv=None):
             if reader is not None:
                 (camera_control, camera_status, movement, movement_status,
                  physics, physics_status, camera_aim) = build_controllers(reader, args, spec)
+                spectate, player_status = build_spectate(reader)
             state = {"inset": None, "quit": False, "basis_mode": "columns"}
             control = threading.Thread(target=_pump_controls, args=(state, overlay), daemon=True)
             control.start()
@@ -577,6 +641,7 @@ def main(argv=None):
                         pid, reader = attached
                         (camera_control, camera_status, movement, movement_status,
                          physics, physics_status, camera_aim) = build_controllers(reader, args, spec)
+                        spectate, player_status = build_spectate(reader)
                         if physics is not None:
                             physics.space_seen = inputs.space_presses
                         inputs = InputState(space_presses=inputs.space_presses)
@@ -615,6 +680,13 @@ def main(argv=None):
                                     camera_control.tick(settings)
                                     camera_status = camera_control.status
                                 last_movement = tick
+                            if spectate is not None:
+                                spectate.tick({address for address, _ in frame.roster})
+                                player_status = spectate.status
+                            for action, key in (overlay.take_actions() if overlay else ()):
+                                player_status = run_player_action(action, key, frame, physics, spectate,
+                                                                  time.monotonic())
+                                print(f"[players] {player_status}", flush=True)
                             if rejoining:
                                 session.observe_rejoin(tick)
                                 rejoining = False
@@ -624,7 +696,8 @@ def main(argv=None):
                     print(f"[session] invalidated ({exc}); waiting for the next game", flush=True)
                     # Do not restore fields into a detached game tree.
                     # Restoration is only attempted on a validated shutdown.
-                    movement = camera_control = physics = camera_aim = None
+                    movement = camera_control = physics = camera_aim = spectate = None
+                    player_status = "Waiting for next game"
                     SessionRecovery._dispose(reader)
                     reader = None
                     inputs = InputState(space_presses=inputs.space_presses)
@@ -667,6 +740,9 @@ def main(argv=None):
                               noclip_available=physics is not None, noclip_status=physics_status,
                               toasts=session.feed(tick))
                 packet["aim"] = step
+                packet.update(spectating=spectate.target if spectate is not None else 0,
+                              player_status=player_status, spectate_available=spectate is not None,
+                              teleport_available=physics is not None and bool(physics.spec.solver_positions))
                 if overlay:
                     if not overlay.send(packet):
                         print("[esp] overlay closed", flush=True)
@@ -717,7 +793,7 @@ def main(argv=None):
         if reader is not None:
             try:
                 reader.validate_session()
-                close_controllers(camera_control, movement, physics)
+                close_controllers(camera_control, movement, physics, spectate)
             except Exception as exc:
                 print(f"[session] skipping stale restoration: {exc}", flush=True)
             SessionRecovery._dispose(reader)

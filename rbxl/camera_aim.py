@@ -75,7 +75,7 @@ class CameraAimController:
         if self.failed:
             return None
         if not inputs.fresh(now) or not inputs.focused or not inputs.aim_held:
-            self.status = "Hold right mouse in Roblox"
+            self.status = "Hold the aim key in Roblox"
             return None
         if not frame.complete or step is None or not 0 < elapsed <= 0.1:
             self.status = "Camera read failed" if not frame.complete else "No target in radius"

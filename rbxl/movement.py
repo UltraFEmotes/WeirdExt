@@ -75,6 +75,11 @@ class MachVectorWriter(MachFieldWriter):
     allowed_sizes = (12,)
 
 
+class MachPointerWriter(MachFieldWriter):
+    """One 8-byte count or a 16-byte (object, control block) smart-pointer pair."""
+    allowed_sizes = (8, 16)
+
+
 class MovementController:
     """Single polling-thread owner. Disabled by default; no pose or task-port discovery."""
     def __init__(self, reader, spec: MovementSpec, writer=None):

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Find Player.Team and Humanoid.Health/MaxHealth live and record them in the matching profile.
+"""Find optional live-only offsets and record them in the matching profile.
 
-    sudo .venv/bin/python probe_offsets.py team     # join a game that has teams
-    sudo .venv/bin/python probe_offsets.py health   # you will be asked to take damage
+    sudo .venv/bin/python probe_offsets.py team      # Player.Team; join a game that has teams
+    sudo .venv/bin/python probe_offsets.py health    # Humanoid.Health/MaxHealth; you take damage
+    sudo .venv/bin/python probe_offsets.py subject   # Camera.CameraSubject + Instance.WeakThis (read-only)
+    sudo .venv/bin/python probe_offsets.py teleport  # solver position; you stand still, it lifts you
 
-Both are optional profile fields: team colors / team check and health bars stay
-off until they are recorded. A field is written only when exactly one offset
+Features that need a field (team colors, health bars, spectate, teleport) stay
+off until it is recorded. A field is written only when exactly one offset
 survives every check.
 """
 from __future__ import annotations
@@ -14,10 +16,14 @@ import argparse
 import json
 import struct
 import sys
+import time
 
 from rbxl.esp_reader import ESPReader, OffsetSpec
+from dumper import prims
 from rbxl.memory import MemoryFault, find_roblox_pid
-from rbxl.profiles import select_profile
+from rbxl.movement import MachFieldWriter
+from rbxl.physics_control import PhysicsController, PhysicsSpec
+from rbxl.profiles import select_profile, write_json
 
 WINDOW = 0x800
 MAX_ROUNDS = 6
@@ -41,7 +47,7 @@ def record(profile, fields, method):
     report = json.loads(path.read_text(encoding="utf-8"))
     for name, value in fields.items():
         report["resolved"][name] = {"value": value, "method": method, "confidence": 1.0}
-    path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    write_json(path, report)
     print(f"[probe] recorded {', '.join(f'{name} = {value:#x}' for name, value in fields.items())} in {path}")
 
 
@@ -114,13 +120,129 @@ def probe_health(profile, reader, local):
            "live probe: field that tracked damage while its MaxHealth sibling stayed fixed")
 
 
+def qword(window, offset):
+    return struct.unpack_from("<Q", window, offset)[0]
+
+
+def probe_subject(profile, reader, local):
+    """CameraSubject is a smart pointer: (Humanoid*, control block). Every Instance keeps
+    its own (self, control block) pair; spectate copies a target's pair into the camera."""
+    humanoid = humanoid_of(reader, local)
+    camera = reader.pointer(reader.workspace + reader.spec.camera)
+    if reader.klass(camera) != "RBX::Camera":
+        raise RuntimeError("CurrentCamera not found")
+    window = reader.mem.read(camera, WINDOW)
+    subjects = [(offset, qword(window, offset + 8)) for offset in range(0, WINDOW - 8, 8)
+                if qword(window, offset) == humanoid]
+    print(f"[probe] Camera slots holding your Humanoid: {[hex(offset) for offset, _ in subjects]}")
+    body = reader.mem.read(humanoid, WINDOW)
+    matches = [(offset, self_offset) for offset, control in subjects if prims.plausible_ptr(control)
+               for self_offset in range(0, WINDOW - 8, 8)
+               if qword(body, self_offset) == humanoid and qword(body, self_offset + 8) == control]
+    # The self pair must hold for every other Humanoid too.
+    others = [humanoid_of(reader, player) for player in roster(reader) if player != local
+              and reader.klass(reader.pointer(player + reader.spec.character)) in ("RBX::Model", "RBX::ModelInstance")]
+    matches = [(offset, self_offset) for offset, self_offset in matches
+               if all(reader.pointer(other + self_offset) == other
+                      and prims.plausible_ptr(reader.pointer(other + self_offset + 8)) for other in others)]
+    print(f"[probe] (CameraSubject, WeakThis) candidates: {[(hex(a), hex(b)) for a, b in matches]} "
+          f"checked against {len(others)} other Humanoids")
+    if len(matches) != 1:
+        raise RuntimeError("CameraSubject is not unique; spawn in, keep the default camera and retry")
+    subject, weak_this = matches[0]
+    record(profile, {"Camera.CameraSubject": subject, "Instance.WeakThis": weak_this},
+           "live probe: camera smart pointer equal to the local Humanoid's own (self, control) pair")
+
+
+POSITION_WINDOW = 0x1000   # solver body bytes searched for the position
+POSITION_TOLERANCE = 3.0   # studs; the solver may track the centre of mass, not the root part
+LIFT = 10.0
+
+
+def probe_teleport(profile, reader, local):
+    physics = PhysicsController(reader, PhysicsSpec.from_evidence(profile / "physics.json", reader.spec.binary_sha256))
+    if physics.spec.solver_body is None:
+        raise RuntimeError("run probe_jump_velocity.py first; teleport uses the same solver body")
+    physics.character = physics._character()
+    physics._scan(time.monotonic())
+    root, body = physics._solver()
+    pose = [root + physics.spec.velocity - 12, root + physics.spec.velocity_mirror - 12]
+    position = struct.unpack("<3f", reader.mem.read(pose[0], 12))
+    window = reader.mem.read(body, POSITION_WINDOW)
+    candidates = []
+    for code, width in (("f", 4), ("d", 8)):
+        for offset in range(0, POSITION_WINDOW - 3 * width + 1, width):
+            values = struct.unpack_from(f"<3{code}", window, offset)
+            if all(abs(a - b) <= POSITION_TOLERANCE for a, b in zip(values, position)) and abs(values[1]) > 0.5:
+                candidates.append((offset, code))
+    print(f"[probe] your position {tuple(round(v, 2) for v in position)}; solver body candidates: "
+          f"{[(hex(offset), code) for offset, code in candidates]}")
+    if not candidates:
+        raise RuntimeError("no solver body value near your position; nothing recorded")
+    writer = MachFieldWriter(reader.mem)
+    # The three float copies sit 72 bytes apart, each a (position, velocity) block; the
+    # engine's choice among them varies with state, so teleport moves all of them together.
+    blocks = sorted({offset for offset, code in candidates if code == "f"
+                     and any((offset - other) % 72 == 0 and offset != other
+                             for other, other_code in candidates if other_code == "f")})
+    print(f"[probe] position blocks 72 bytes apart: {[hex(offset) for offset in blocks]}")
+    if len(blocks) < 2:
+        raise RuntimeError("no 72-byte block family among the candidates; nothing recorded — paste this output")
+
+    def write_all(lift):
+        root, body = physics._solver()
+        for offset in blocks:
+            current = struct.unpack("<f", reader.mem.read(body + offset + 4, 4))[0]
+            writer.write(body + offset + 4, struct.pack("<f", current + lift))
+        for copy in pose:
+            current = struct.unpack("<f", reader.mem.read(copy + 4, 4))[0]
+            writer.write(copy + 4, struct.pack("<f", current + lift))
+
+    def trial(held):
+        before = struct.unpack("<3f", reader.mem.read(pose[0], 12))
+        target = before[1] + LIFT
+        write_all(LIFT)
+        if held:
+            # Re-assert for ~50 ms so a physics step cannot restore the old copy in between.
+            for _ in range(3):
+                time.sleep(0.016)
+                current = struct.unpack("<f", reader.mem.read(pose[0] + 4, 4))[0]
+                if current < target - 0.5:
+                    write_all(target - current)
+        time.sleep(0.15)
+        after = struct.unpack("<3f", reader.mem.read(pose[0], 12))
+        moved = after[1] - before[1] > LIFT * 0.6
+        print(f"[probe]   {'held' if held else 'once'}: y {before[1]:.2f} -> {after[1]:.2f} {'LIFT' if moved else '-'}",
+              flush=True)
+        time.sleep(1.6)  # land before the next test
+        return moved
+
+    input("[probe] stand still on flat ground, then press Enter (10 lifts of 10 studs)… ")
+    once = sum(trial(False) for _ in range(5))
+    held = sum(trial(True) for _ in range(5))
+    print(f"[probe] all blocks: once {once}/5, held {held}/5", flush=True)
+    if max(once, held) < 4:
+        raise RuntimeError("teleport by position copies is not reliable (need 4/5); nothing recorded — paste this output")
+    path = profile / "physics.json"
+    report = json.loads(path.read_text(encoding="utf-8"))
+    report["solver"]["positions"] = blocks
+    report["solver"]["position_hold"] = held > once
+    report["solver"].pop("position", None)
+    report["solver"].pop("position_type", None)
+    write_json(path, report)
+    print(f"[probe] recorded solver positions {[hex(offset) for offset in blocks]} "
+          f"({'held' if held > once else 'single'} write) in {path}")
+
+PROBES = {"team": probe_team, "health": probe_health, "subject": probe_subject, "teleport": probe_teleport}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("field", choices=("team", "health"))
+    parser.add_argument("field", choices=tuple(PROBES))
     args = parser.parse_args(argv)
     profile, reader, local = attach()
     try:
-        (probe_team if args.field == "team" else probe_health)(profile, reader, local)
+        PROBES[args.field](profile, reader, local)
     finally:
         reader.close()
     return 0

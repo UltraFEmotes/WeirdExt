@@ -57,6 +57,16 @@
       "value": 396,
       "method": "live probe: field that tracked damage while its MaxHealth sibling stayed fixed",
       "confidence": 1.0
+    },
+    "Camera.CameraSubject": {
+      "value": 168,
+      "method": "live probe: camera smart pointer equal to the local Humanoid's own (self, control) pair",
+      "confidence": 1.0
+    },
+    "Instance.WeakThis": {
+      "value": 8,
+      "method": "live probe: camera smart pointer equal to the local Humanoid's own (self, control) pair",
+      "confidence": 1.0
     }
   },
   "evidence": {
@@ -73,12 +83,5 @@
     "Sanitized runtime profile: no live pointers, object names, samples or memory windows.",
     "Geometry uses the getter-backed fields from the preserved v5 report.",
     "Camera.FieldOfView uses the corroborated Camera+0x120 radian getter, not the old heuristic."
-  ],
-  "fast_attach": {
-    "slot": 111141944,
-    "hops": [
-      1888
-    ],
-    "method": "module global chain resolved to the live DataModel"
-  }
+  ]
 }

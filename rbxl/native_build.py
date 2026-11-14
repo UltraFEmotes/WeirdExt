@@ -16,7 +16,7 @@ OVERLAY_SOURCES = [ROOT / "rbxl" / "overlay.mm"] + [IMGUI / name for name in (
     "backends/imgui_impl_metal.mm", "backends/imgui_impl_osx.mm")]
 COMPILE_FLAGS = ["-std=c++17", "-fobjc-arc", "-I", str(IMGUI), "-I", str(IMGUI / "backends")]
 LINK_FLAGS = [flag for framework in ("AppKit", "Metal", "MetalKit", "QuartzCore", "GameController",
-                                     "ApplicationServices", "Carbon") for flag in ("-framework", framework)]
+                                     "ApplicationServices", "Carbon", "ImageIO") for flag in ("-framework", framework)]
 
 
 def compiler():

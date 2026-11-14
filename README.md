@@ -39,8 +39,10 @@ memory readback is not proof that a gameplay feature works in the live engine.
 | Part-fitted boxes, skeleton, tracers, off-screen arrows | Working in reported live use |
 | Health bars, team colors / team check | Working in reported live use; offsets recorded by `probe_offsets.py` |
 | Fly | Working in reported live use; writes the solver velocity found by `probe_jump_velocity.py` |
-| Saved settings, per-feature hotkeys, Explorer property panel | Implemented |
-| Fast attach (module global chain) | Recorded and verified for the bundled profile; rejoin recovery still under investigation |
+| ImGui menu: sidebar, themes, saved settings, per-feature keybinds, aim key | Working in reported live use |
+| Explorer property panel | Implemented |
+| Player list with avatars: teleport and spectate | Working in reported live use; offsets from `probe_offsets.py teleport` / `subject` |
+| Fast attach (module global chain) | Experimental: chains found so far did not survive a Roblox restart; attach falls back to the sweep |
 | Native Visuals / Player / Aim settings | Implemented |
 | Explorer | Working in reported live use; snapshots refresh on request |
 | Leaving a game and joining another | **Unreliable in reported live use; under investigation** |
@@ -270,7 +272,7 @@ does not post those mouse-movement events.
 
 In **Player**, press **Allow keyboard input…**. If macOS requests it, enable
 WeirdExt in **Privacy & Security → Input Monitoring**, then restart WeirdExt.
-The helper relays focus state, right-mouse hold, cumulative Space presses and
+The helper relays focus state, aim-key state, cumulative Space presses and
 the Fly keys (W, A, S, D, Space, Left Shift), and polls Right Shift and your
 bound hotkeys. Without this permission those keys are not seen.
 
@@ -324,13 +326,19 @@ locally ad-hoc signed, not Developer ID notarized.
 ### Aim
 
 Enable **Aimbot**, choose **Mouse** or **Camera**, set **Radius** and
-**Smoothness**, focus Roblox and hold the right mouse button.
+**Smoothness**, focus Roblox and use the aim key.
+
+- **Aim key** (Aim tab): Right Mouse by default. Click it and press any key,
+  Option/Command/Control (left or right), Left Shift, or a mouse side button;
+  **Esc** resets it to Right Mouse. Handy on a trackpad.
+- **Activation**: **Hold** aims while the key is down, **Toggle** flips aiming on
+  each press, **Always** aims whenever Roblox is focused.
 
 - **Part**: Head, Torso, or Closest (the visible part nearest the crosshair).
 - **Priority**: Crosshair (nearest on screen) or Distance (nearest in the world),
   always within the radius.
-- **Sticky target**: keeps the current target for the whole right-mouse hold
-  while it stays inside the radius.
+- **Sticky target**: keeps the current target while aiming stays active and it
+  stays inside the radius.
 - Dead players (health 0, when health is in the profile) are skipped, and
   **Hide teammates** also skips teammates.
 
@@ -339,12 +347,35 @@ writes rotation only, with quaternion interpolation; camera translation is not
 written. Custom camera scripts, stale state, missing permission and game
 behavior can prevent either experimental method from producing the intended result.
 
-### Keys
+### Players
 
-Click a feature in the **Keys** tab and press a key to bind it; **Esc** clears the
-binding. Bound keys toggle ESP, Aimbot, Fly, Noclip, Infinite Jump or Speed
-while Roblox is focused. **Right Shift** always toggles the menu. Bindings are
-saved with your settings.
+Every other player with a readable character, nearest first, with team color,
+distance and health.
+
+- **Teleport** moves you 3 studs above that player: it shifts every physics
+  solver position copy and both pose copies together and zeroes your velocity. Needs
+  `probe_offsets.py teleport`. Games with server-side movement checks can pull
+  you back.
+- **Spectate** points the camera's `CameraSubject` at that player's Humanoid;
+  **Stop** restores yours. It copies the target's full smart-pointer pair and
+  adds one reference first, so a respawn that resets the camera cannot free a
+  live object (one reference leaks instead). It ends on its own when the target
+  leaves or respawns, or when Roblox changes the camera itself. Needs
+  `probe_offsets.py subject` (read-only).
+
+### Keybinds
+
+Click a feature in the **Keybinds** tab and press a key, Option/Command/Control,
+or a mouse side button to bind it; **Esc** clears the binding. Bound keys toggle
+ESP, Aimbot, Fly, Noclip, Infinite Jump or Speed while Roblox is focused.
+**Right Shift** always toggles the menu. Bindings are saved with your settings.
+
+### Theme
+
+Pick an accent (Violet, Crimson, Ocean, Emerald, Amber, Rose, Mono) and a
+background (Graphite, OLED, Slate); the accent also colors ESP boxes, arrows and
+the watermark. The **Watermark** switch hides the top-left status pill. Nothing
+is drawn unless Roblox or the menu is the active app.
 
 ### Explorer
 
@@ -444,7 +475,9 @@ data segments that leads to the live DataModel within two pointer hops,
 attaches through it to prove it, and records it as `fast_attach`. Run against a
 client that already has a matching profile, it adds only that chain. With
 **fast attach**, attaching takes a few reads instead of a ~50 s heap sweep; if
-the chain ever stops resolving, attach falls back to the sweep.
+the chain ever stops resolving, attach falls back to the sweep. Chains found so
+far were session-specific (they broke after restarting Roblox), so the bundled
+profile ships without one.
 
 Live-only fields come from their own probes, run in a game (each writes into
 the matching profile only when exactly one candidate survives):
@@ -453,6 +486,8 @@ the matching profile only when exactly one candidate survives):
 sudo "$PWD/.venv/bin/python" "$PWD/probe_jump_velocity.py"   # solver velocity: Infinite Jump, Fly
 sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" team     # Player.Team: team colors, team check
 sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" health   # Humanoid.Health/MaxHealth: health bars
+sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" subject  # CameraSubject + WeakThis: spectate (read-only)
+sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" teleport # solver position: teleport (lifts you 10 studs)
 ```
 
 `probe_jump_velocity.py` writes to candidate memory during falls; use a
@@ -542,6 +577,7 @@ requirements.txt                NumPy dependency
 rbxl/
   overlay.mm                    ImGui/Metal overlay, menu, hotkeys, saved settings, Explorer
   profiles.py                   Profile selection by installed binary SHA-256
+  spectate.py                   CameraSubject spectate with balanced reference counts
   native_build.py               Content-addressed overlay app build/signing
   memory.py                     Mach reads, process selection, task-port lifecycle
   esp_reader.py                 ESPReader, ownership checks and fresh snapshots
@@ -564,7 +600,7 @@ dumper/
 dump_offsets.py                 Live structural report CLI
 update_profile.py               Build/extend a profile for the installed client
 probe_jump_velocity.py          Live probe: solver velocity for Infinite Jump/Fly
-probe_offsets.py                Live probe: Player.Team, Humanoid.Health/MaxHealth
+probe_offsets.py                Live probes: team, health, camera subject, teleport position
 inspect_*_accessors.py           Offline executable inspection CLIs
 profiles/0.745.0.7451137/         Sanitized version/hash-bound runtime summaries
 third_party/imgui/              Vendored Dear ImGui v1.92.9b (MIT) + osx/metal backends

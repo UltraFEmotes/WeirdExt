@@ -34,7 +34,7 @@ from rbxl.esp_reader import ESPReader, OffsetSpec
 from rbxl.memory import MachProcess, MemoryFault, find_roblox_pid
 from rbxl.movement import MovementSpec
 from rbxl.physics_control import PhysicsSpec
-from rbxl.profiles import CLIENT, PROFILES, binary_sha256, profile_sha256
+from rbxl.profiles import CLIENT, PROFILES, binary_sha256, give_back, profile_sha256, write_json
 
 OBJECT_WINDOW = 0x1000  # bytes of each object searched for the next pointer
 # Heuristic findings that probe_offsets.py must confirm before the runtime trusts them.
@@ -173,7 +173,7 @@ def add_fast_attach(directory):
         offsets["fast_attach"] = {"slot": slot, "hops": list(hops),
                                   "method": "module global chain resolved to the live DataModel"}
         candidate = directory / "offsets.fast.json"
-        candidate.write_text(json.dumps(offsets, indent=2) + "\n", encoding="utf-8")
+        write_json(candidate, offsets)
         # Prove it the way main.py will use it before replacing the profile.
         try:
             fast = ESPReader._fast_attach(reader.mem, OffsetSpec.from_report(candidate).with_camera_evidence(
@@ -203,11 +203,10 @@ def main():
     offsets = build_offsets(report, geometry, camera, digest)
 
     directory.mkdir()
+    give_back(directory)
     files = {"offsets.json": offsets, "camera.json": camera, "movement.json": movement, "physics.json": physics}
     for name, payload in files.items():
-        with open(directory / name, "x", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2)
-            handle.write("\n")
+        write_json(directory / name, payload, exclusive=True)
     # The same loaders main.py uses; a profile that fails here is unusable.
     spec = OffsetSpec.from_report(directory / "offsets.json").with_camera_evidence(directory / "camera.json")
     MovementSpec.from_evidence(directory / "movement.json", spec.binary_sha256)

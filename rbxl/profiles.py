@@ -1,6 +1,7 @@
 """Select the runtime profile whose binary identity matches the installed client."""
 import hashlib
 import json
+import os
 from pathlib import Path
 
 PROFILES = Path(__file__).resolve().parent.parent / "profiles"
@@ -21,6 +22,19 @@ def profile_sha256(directory: Path) -> str | None:
         return report["evidence"]["static_geometry_accessors"]["binary_sha256"]
     except (OSError, ValueError, KeyError, TypeError):
         return None
+
+
+def give_back(path: Path):
+    """Probes run under sudo; hand files they create back to the user who ran sudo."""
+    if os.geteuid() == 0 and os.environ.get("SUDO_UID"):
+        os.chown(path, int(os.environ["SUDO_UID"]), int(os.environ["SUDO_GID"]))
+
+
+def write_json(path: Path, payload, *, exclusive: bool = False):
+    with open(path, "x" if exclusive else "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+        handle.write("\n")
+    give_back(path)
 
 
 def select_profile(client: Path = CLIENT) -> Path:

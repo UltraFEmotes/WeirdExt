@@ -29,7 +29,7 @@
     }
   ],
   "limitations": [
-    "Infinite Jump writes the solver body velocity; validated by the live probe, pending gameplay confirmation."
+    "Infinite Jump, Fly and Teleport write the solver body; confirmed in reported live use."
   ],
   "solver": {
     "body_pointer": 320,
@@ -37,6 +37,12 @@
     "evidence": [
       "Live probe 2026-11-15: a +50 Y write at *(Primitive+0x140)+0xa4 during free fall moved the Primitive PV Y to +40.19, +40.19 and +39.37 after 50 ms (3/3).",
       "Mid-air writes to the Primitive PV pair alone were reverted within one physics step."
-    ]
+    ],
+    "positions": [
+      152,
+      224,
+      296
+    ],
+    "position_hold": false
   }
 }
