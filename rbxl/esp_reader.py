@@ -9,10 +9,13 @@ import hashlib
 import json
 import math
 import struct
+import time
 from dataclasses import dataclass, replace
 from pathlib import Path
 
 from dumper import prims
+from dumper.macho import MachOError
+from dumper.rtti import ImageModel
 from dumper.solve import InstanceLayout, Walker, WalkError, solve_instance_layout
 from rbxl.memory import MachProcess, MemoryFault, find_roblox_candidates
 
@@ -32,6 +35,14 @@ class OffsetSpec:
     fov: int | None = None  # Camera.FieldOfView candidate; unvalidated
     fov_unit: str = "degrees"
     camera_verified: bool = False
+    # Optional same-binary findings; each feature that needs one is unavailable without it.
+    humanoid_health: int | None = None
+    humanoid_max_health: int | None = None
+    player_team: int | None = None
+    camera_subject: int | None = None  # Camera smart pointer (object, control block)
+    weak_this: int | None = None       # every Instance's own (self, control block) pair
+    fast_slot: int | None = None   # module-relative global that leads to the DataModel
+    fast_hops: tuple[int, ...] = ()  # pointer offsets followed from that global
 
     def with_camera_evidence(self, path: Path):
         """Apply same-binary, unambiguous offline getter evidence over heuristics."""
@@ -79,18 +90,62 @@ class OffsetSpec:
         if (selected["basepart_primitive_offset"] != primitive
                 or selected["primitive_cframe_offset"] != frame):
             raise ValueError("static getter and reported geometry offsets disagree")
+        def optional(name):
+            return value(name) if name in fields else None
+
+        fast = report.get("fast_attach")
+        if fast is not None:
+            slot, hops = fast.get("slot"), fast.get("hops")
+            if (type(slot) is not int or slot < 0 or slot % 8 or not isinstance(hops, list)
+                    or not 1 <= len(hops) <= MAX_FAST_HOPS
+                    or any(type(hop) is not int or not 0 <= hop <= 0x10000 or hop % 8 for hop in hops)):
+                raise ValueError("malformed fast_attach chain")
+        health = optional("Humanoid.Health"), optional("Humanoid.MaxHealth")
+        if (health[0] is None) != (health[1] is None):
+            raise ValueError("Humanoid.Health and Humanoid.MaxHealth must be recorded together")
         return cls(value("Instance.Name"), value("Instance.Parent"), value("Instance.ChildrenStart"),
                    value("Player.ModelInstance"), primitive, frame, value("Workspace.CurrentCamera"),
-                   camera_frame, value("Players.LocalPlayer") if "Players.LocalPlayer" in fields else None,
-                   digest,
-                   value("Camera.FieldOfView") if "Camera.FieldOfView" in fields else None)
+                   camera_frame, optional("Players.LocalPlayer"), digest, optional("Camera.FieldOfView"),
+                   humanoid_health=health[0], humanoid_max_health=health[1],
+                   player_team=optional("Player.Team"), camera_subject=optional("Camera.CameraSubject"),
+                   weak_this=optional("Instance.WeakThis"),
+                   fast_slot=fast["slot"] if fast else None, fast_hops=tuple(fast["hops"]) if fast else ())
+
+
+MAX_FAST_HOPS = 3
+PART_CLASSES = ("RBX::Part", "RBX::MeshPart", "RBX::WedgePart")
+ROOT_PARTS = ("HumanoidRootPart", "Head", "UpperTorso", "Torso")
+# Extremities bound the box; the full set also draws the skeleton (R15 and R6 rigs).
+EXTREMITY_PARTS = ("Head", "LeftHand", "RightHand", "LeftFoot", "RightFoot",
+                   "Left Arm", "Right Arm", "Left Leg", "Right Leg")
+SKELETON_PARTS = EXTREMITY_PARTS + ("UpperTorso", "LowerTorso", "Torso", "LeftUpperArm", "LeftLowerArm",
+                                    "RightUpperArm", "RightLowerArm", "LeftUpperLeg", "LeftLowerLeg",
+                                    "RightUpperLeg", "RightLowerLeg")
+BODY_RESCAN_SECONDS = 1.0
+
+
+Vector = tuple[float, float, float]
 
 
 @dataclass(frozen=True)
 class Target:
     name: str
-    position: tuple[float, float, float]
+    position: Vector
     is_local: bool = False
+    address: int = 0
+    parts: tuple[tuple[str, Vector], ...] = ()
+    health: float | None = None
+    max_health: float | None = None
+    team: int = 0  # Team instance address; 0 = no team or offset unavailable
+
+
+@dataclass
+class _Body:
+    character: int
+    root: tuple[int, int]                  # (part, primitive)
+    parts: tuple[tuple[str, int], ...]     # (name, primitive)
+    humanoid: int
+    scanned: float
 
 
 @dataclass(frozen=True)
@@ -105,6 +160,7 @@ class Frame:
     complete: bool = True  # False means a failed camera read, not a valid empty scene.
     camera_address: int | None = None
     roster: tuple[tuple[int, str], ...] = ()  # (address, display name) pairs
+    local_team: int = 0
 
 
 def decode_frame(raw: bytes):
@@ -125,7 +181,7 @@ class ESPReader:
         self.mem, self.model, self.spec = mem, model, spec
         # Cache object bindings only. Poses and ownership links are read anew
         # on every snapshot; respawns/replacements invalidate their bindings.
-        self._body_bindings: dict[int, tuple[int, int, int]] = {}
+        self._bodies: dict[int, _Body] = {}
         self.walker = Walker(mem, layout)
         self.root = layout.services.get("DataModel", 0)
         self.players = layout.services.get("Players", 0)
@@ -138,6 +194,14 @@ class ESPReader:
         print(f"[esp] attaching read-only to pid {pid}; {'fresh' if fresh else 'cached'} discovery", flush=True)
         mem = MachProcess(pid)
         try:
+            if spec.fast_slot is not None:
+                try:
+                    reader = cls._fast_attach(mem, spec)
+                    print(f"[esp] fast attach: DataModel {reader.root:#x} via the profile's global chain", flush=True)
+                    return reader
+                except (WalkError, MemoryFault, MachOError) as exc:
+                    # The chain is a profile shortcut; the sweep remains the source of truth.
+                    print(f"[esp] fast attach unavailable ({exc}); running full discovery", flush=True)
             for bypass_cache in ((True,) if fresh else (False, True)):
                 try:
                     options = {"cache_path": None} if bypass_cache else {}
@@ -171,6 +235,30 @@ class ESPReader:
         except BaseException:
             mem.close()
             raise
+
+    @classmethod
+    def _fast_attach(cls, mem, spec):
+        """Module global -> pointer hops -> DataModel: a few reads, no heap sweep."""
+        base = mem.main_image_base()
+        if base is None:
+            raise WalkError("client image is not mapped")
+        root = mem.u64(base + spec.fast_slot)
+        for hop in spec.fast_hops:
+            if not prims.plausible_ptr(root):
+                raise WalkError("fast-attach chain broke before the DataModel")
+            root = mem.u64(root + hop)
+        if not prims.plausible_ptr(root):
+            raise WalkError("chain did not reach a DataModel pointer")
+        model = ImageModel(mem, list(mem.regions()))
+        if hashlib.sha256(model.mach.blob).hexdigest() != spec.binary_sha256:
+            raise RuntimeError("installed binary differs from offset report; generate a new report")
+        ref = model.class_of(mem.u64(root))
+        if ref is None or ref.name != "RBX::DataModel":
+            raise WalkError("chain target is not a DataModel (game still loading?)")
+        layout = InstanceLayout(name=spec.name, children=spec.children, children_end=spec.children + 8,
+                                stride=16, parent=spec.parent, name_kind="ptr", children_kind="ptr",
+                                object_model=model, root_candidates=(root,))
+        return cls._select_session(mem, model, layout, spec)
 
     @classmethod
     def _select_session(cls, mem, model, layout, spec):
@@ -252,51 +340,84 @@ class ESPReader:
                 return frame
         return None
 
-    def _player_position(self, player_addr: int):
-        """World position of a player's body (HRP -> Head -> torso chain),
-        read through the getter-backed Primitive CFrame. Used for targets
-        AND for the local player, whose position cross-checks the camera."""
-        character = self.pointer(player_addr + self.spec.character)
-        if not character or self.klass(character) not in ("RBX::ModelInstance", "RBX::Model"):
-            self._body_bindings.pop(player_addr, None)
+    def _scan_body(self, character, now):
+        """Bind a character's parts once; snapshots then read only their poses."""
+        root, parts, humanoid = {}, [], 0
+        for child in self.children(character, 128):
+            if self.pointer(child + self.spec.parent) != character:
+                continue
+            kind = self.klass(child)
+            if kind == "RBX::Humanoid":
+                humanoid = child
+                continue
+            if kind not in PART_CLASSES:
+                continue
+            name = self.name(child)
+            primitive = self.pointer(child + self.spec.primitive)
+            if not name or not primitive or self.klass(primitive) != "RBX::Primitive":
+                continue
+            if name in ROOT_PARTS:
+                root[name] = (child, primitive)
+            if name in SKELETON_PARTS:
+                parts.append((name, primitive))
+        chosen = next((root[name] for name in ROOT_PARTS if name in root), None)
+        if chosen is None:
             return None
-        if self.pointer(player_addr + self.spec.parent) != self.players:
-            self._body_bindings.pop(player_addr, None)
-            return None
-        binding = self._body_bindings.get(player_addr)
-        if binding is not None:
-            owner, part, primitive = binding
-            if (owner == character and self.pointer(part + self.spec.parent) == character
-                    and self.klass(part) in ("RBX::Part", "RBX::MeshPart", "RBX::WedgePart")
-                    and self.pointer(part + self.spec.primitive) == primitive
-                    and self.klass(primitive) == "RBX::Primitive"):
-                frame = self.frame_at(primitive, self.spec.primitive_frame)
-                return frame[1] if frame is not None else None
-            self._body_bindings.pop(player_addr, None)
-        parts = {}
-        for part in self.children(character, 128):
-            name = self.name(part)
-            if name in ("HumanoidRootPart", "Head", "UpperTorso", "Torso"):
-                parts[name] = part
-        for part_name in ("HumanoidRootPart", "Head", "UpperTorso", "Torso"):
-            part = parts.get(part_name)
-            if part is None:
-                continue
-            if self.klass(part) not in ("RBX::Part", "RBX::MeshPart", "RBX::WedgePart"):
-                continue
-            if self.pointer(part + self.spec.parent) != character:
-                continue
-            primitive = self.pointer(part + self.spec.primitive)
-            if not primitive or self.klass(primitive) != "RBX::Primitive":
-                continue
-            frame = self.frame_at(primitive, self.spec.primitive_frame)
-            if frame is not None:
-                self._body_bindings[player_addr] = character, part, primitive
-                return frame[1]
-        return None
+        return _Body(character, chosen, tuple(parts), humanoid, now)
 
-    def snapshot(self, show_local=False):
+    def _body(self, player_addr, now):
+        character = self.pointer(player_addr + self.spec.character)
+        if (not character or self.klass(character) not in ("RBX::ModelInstance", "RBX::Model")
+                or self.pointer(player_addr + self.spec.parent) != self.players):
+            self._bodies.pop(player_addr, None)
+            return None
+        body = self._bodies.get(player_addr)
+        part, primitive = body.root if body else (0, 0)
+        # Respawns replace the character; the root binding is rechecked every frame.
+        if (body is None or body.character != character or now - body.scanned >= BODY_RESCAN_SECONDS
+                or self.pointer(part + self.spec.parent) != character
+                or self.pointer(part + self.spec.primitive) != primitive
+                or self.klass(primitive) != "RBX::Primitive"):
+            body = self._scan_body(character, now)
+            if body is None:
+                self._bodies.pop(player_addr, None)
+                return None
+            self._bodies[player_addr] = body
+        return body
+
+    def _read_target(self, player_addr, now, wanted):
+        """World pose of a player's body plus the requested parts, health and team."""
+        body = self._body(player_addr, now)
+        if body is None:
+            return None
+        frame = self.frame_at(body.root[1], self.spec.primitive_frame)
+        if frame is None:
+            return None
+        parts = []
+        for name, primitive in body.parts:
+            if name in wanted and (pose := self.frame_at(primitive, self.spec.primitive_frame)) is not None:
+                parts.append((name, pose[1]))
+        health = max_health = None
+        if self.spec.humanoid_health is not None and body.humanoid:
+            try:
+                health, max_health = (struct.unpack("<f", self.mem.read(body.humanoid + offset, 4))[0]
+                                      for offset in (self.spec.humanoid_health, self.spec.humanoid_max_health))
+            except MemoryFault:
+                health = max_health = None
+            if not (math.isfinite(health or math.nan) and math.isfinite(max_health or math.nan)
+                    and 0 < max_health <= 1e6):
+                health = max_health = None
+        return frame[1], tuple(parts), health, max_health, self.team(player_addr)
+
+    def team(self, player_addr):
+        if self.spec.player_team is None:
+            return 0
+        team = self.pointer(player_addr + self.spec.player_team)
+        return team if team and self.klass(team) == "RBX::Team" else 0
+    def snapshot(self, show_local=False, skeleton=False):
         self.validate_session()
+        now = time.monotonic()
+        wanted = SKELETON_PARTS if skeleton else EXTREMITY_PARTS
         camera = self.pointer(self.workspace + self.spec.camera)
         if not camera or self.klass(camera) != "RBX::Camera":
             return Frame(None, None, (), 0, "CurrentCamera not resolved; drawing paused", complete=False)
@@ -320,18 +441,21 @@ class ESPReader:
                    if self.klass(addr) == "RBX::Player"
                    and self.pointer(addr + self.spec.parent) == self.players]
         roster_set = set(roster)
-        for stale_player in self._body_bindings.keys() - roster_set:
-            del self._body_bindings[stale_player]
+        for stale_player in self._bodies.keys() - roster_set:
+            del self._bodies[stale_player]
         local = self.pointer(self.players + self.spec.local_player) if self.spec.local_player is not None else 0
         local = local if local in roster else 0
-        local_position = self._player_position(local) if local else None
+        local_read = self._read_target(local, now, ()) if local else None
+        local_position = local_read[0] if local_read else None
         targets = []
         for player in roster:
             if player == local and not show_local:
                 continue
-            position = self._player_position(player)
-            if position is not None:
-                targets.append(Target(self.name(player) or f"Player {player:#x}", position, player == local))
+            read = local_read if player == local else self._read_target(player, now, wanted)
+            if read is not None:
+                position, parts, health, max_health, team = read
+                targets.append(Target(self.name(player) or f"Player {player:#x}", position, player == local,
+                                      player, parts, health, max_health, team))
         status = "Connected — macOS ARM64 external"
         if not local:
             status += "; local player unknown"
@@ -341,4 +465,5 @@ class ESPReader:
             status += "; no readable target positions"
         roster_named = tuple((addr, self.name(addr) or f"Player {addr:#x}") for addr in roster)
         return Frame(camera_frame[0], camera_frame[1], tuple(targets), len(roster), status,
-                     fov, local_position, complete=bool(local), camera_address=camera, roster=roster_named)
+                     fov, local_position, complete=bool(local), camera_address=camera, roster=roster_named,
+                     local_team=self.team(local) if local else 0)

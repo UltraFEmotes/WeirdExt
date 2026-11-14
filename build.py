@@ -11,7 +11,6 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent
-PROFILE = ROOT / "profiles" / "0.745.0.7451137"
 
 
 def run(command):
@@ -29,36 +28,41 @@ def main(argv=None):
             raise RuntimeError("WeirdExt requires native ARM64 macOS; do not use a Rosetta Python")
         if sys.version_info < (3, 11):
             raise RuntimeError("Python 3.11 or newer is required; Python 3.14 is recommended")
-        swift, clang = shutil.which("swiftc"), shutil.which("clang")
-        if swift is None or clang is None:
+        clang = shutil.which("clang")
+        if clang is None:
             raise RuntimeError("install Xcode Command Line Tools with: xcode-select --install")
 
         scripts = [ROOT / name for name in (
-            "main.py", "build.py", "dump_offsets.py", "inspect_camera_accessors.py",
-            "inspect_geometry_accessors.py", "inspect_movement_accessors.py", "inspect_physics_accessors.py")]
+            "main.py", "build.py", "dump_offsets.py", "update_profile.py", "export_offsets.py", "verify_offsets.py", "probe_offsets.py",
+            "probe_jump_velocity.py", "inspect_camera_accessors.py", "inspect_geometry_accessors.py",
+            "inspect_movement_accessors.py", "inspect_physics_accessors.py")]
         scripts += list((ROOT / "dumper").glob("*.py"))
         scripts += [path for path in (ROOT / "rbxl").glob("*.py")
                     if path.name not in ("state.py", "offsets.py")]
         for script in scripts:
             compile(script.read_text(encoding="utf-8"), str(script), "exec")
-        run([swift, "-swift-version", "5", "-typecheck", str(ROOT / "rbxl" / "esp_overlay.swift")])
+        from rbxl.native_build import build_overlay, check_overlay
+
+        check_overlay()
         run([clang, "-Wall", "-Wextra", "-fsyntax-only", str(ROOT / "dumper" / "sweepc.c")])
 
         from rbxl.esp_reader import OffsetSpec
         from rbxl.movement import MovementSpec
         from rbxl.physics_control import PhysicsSpec
 
-        spec = OffsetSpec.from_report(PROFILE / "offsets.json").with_camera_evidence(PROFILE / "camera.json")
-        MovementSpec.from_evidence(PROFILE / "movement.json", spec.binary_sha256)
-        PhysicsSpec.from_evidence(PROFILE / "physics.json", spec.binary_sha256)
-        print(f"[build] {len(scripts)} Python sources, Swift types, C syntax and runtime profile validated")
+        profiles = sorted(path for path in (ROOT / "profiles").iterdir() if path.is_dir())
+        for profile in profiles:
+            spec = OffsetSpec.from_report(profile / "offsets.json").with_camera_evidence(profile / "camera.json")
+            MovementSpec.from_evidence(profile / "movement.json", spec.binary_sha256)
+            PhysicsSpec.from_evidence(profile / "physics.json", spec.binary_sha256)
+        print(f"[build] {len(scripts)} Python sources, overlay types, C syntax and "
+              f"{len(profiles)} runtime profile(s) validated")
         if args.check:
             return 0
 
-        from rbxl.native_build import build_helper
         from dumper.scan import ensure_tool
 
-        overlay = build_helper(swift, ROOT / "rbxl" / "esp_overlay.swift")
+        overlay = build_overlay()
         sweeper = ensure_tool()
         if sweeper is None:
             raise RuntimeError("C sweeper compilation failed; check your Clang installation")

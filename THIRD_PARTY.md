@@ -4,8 +4,11 @@
 
 - **Python** — Python Software Foundation license; installed separately.
 - **NumPy** — BSD-3-Clause; installed with `requirements.txt`, not vendored.
-- **Apple SDK frameworks and tools** — AppKit, CoreGraphics,
-  ApplicationServices, Foundation, Mach, Swift, Clang and codesign are supplied
+- **Dear ImGui v1.92.9b** — MIT, © Omar Cornut; vendored unmodified in
+  `third_party/imgui/` (core plus the `osx` and `metal` backends) with its
+  `LICENSE.txt`. Source: https://github.com/ocornut/imgui/releases/tag/v1.92.9b
+- **Apple SDK frameworks and tools** — AppKit, Metal, MetalKit,
+  GameController, CoreGraphics, ApplicationServices, Foundation, Mach, Clang and codesign are supplied
   by macOS / Xcode Command Line Tools. Their licenses are separate from this
   repository's MIT license.
 

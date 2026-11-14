@@ -3,7 +3,7 @@
 
 Projection always reads the current camera FOV. The FOV control changes the
 game camera rather than overriding projection. --headless omits the GUI.
-Stop with Ctrl+C or the WE menu. Infinite Jump is currently nonfunctional.
+Stop with Ctrl+C or the WE menu. Right Shift toggles the menu.
 """
 from __future__ import annotations
 
@@ -17,7 +17,6 @@ import os
 import platform
 from pathlib import Path
 import pwd
-import shutil
 import subprocess
 import sys
 import threading
@@ -33,44 +32,149 @@ from rbxl.input_state import InputState
 from rbxl.movement import MovementController, MovementSpec
 from rbxl.physics_control import PhysicsController, PhysicsSpec
 from rbxl.session import SessionHealth, SessionRecovery, SessionWatcher
-from rbxl.native_build import build_helper
+from rbxl.spectate import SpectateController
+from rbxl.native_build import build_overlay
+from rbxl.profiles import select_profile
 from rbxl.memory import MemoryFault, find_roblox_pid
 from rbxl.w2s import basis, basis_rows, project
 
 
-def display_packet(frame: Frame, fov: float, viewport, box_height: float = 5.4,
-                   box_ratio: float = 0.6, basis_mode: str = "columns"):
-    """Project fixed-height body estimates, centered between their endpoints.
+BONES = (("Head", "UpperTorso"), ("UpperTorso", "LowerTorso"),
+         ("UpperTorso", "LeftUpperArm"), ("LeftUpperArm", "LeftLowerArm"), ("LeftLowerArm", "LeftHand"),
+         ("UpperTorso", "RightUpperArm"), ("RightUpperArm", "RightLowerArm"), ("RightLowerArm", "RightHand"),
+         ("LowerTorso", "LeftUpperLeg"), ("LeftUpperLeg", "LeftLowerLeg"), ("LeftLowerLeg", "LeftFoot"),
+         ("LowerTorso", "RightUpperLeg"), ("RightUpperLeg", "RightLowerLeg"), ("RightLowerLeg", "RightFoot"),
+         ("Head", "Torso"), ("Torso", "Left Arm"), ("Torso", "Right Arm"),
+         ("Torso", "Left Leg"), ("Torso", "Right Leg"))
+HEAD_TOP = 0.8   # studs from the Head centre to the top of the head
+FOOT_DROP = 0.6  # studs from a foot/leg centre to the sole
+BOX_PADDING = 3  # pixels around the projected body
+
+
+def display_packet(frame: Frame, fov: float, viewport, settings: Settings, basis_mode: str = "columns"):
+    """Project each body to a box (from its real parts when readable), skeleton and labels.
 
     The diamond marks overlay center only; it cannot validate camera fields.
-    These boxes are estimates around the selected part, not avatar bounds.
+    Targets off screen or behind the camera become direction arrows.
     """
     if basis_mode not in ("columns", "rows"):
         raise ValueError("mode must be 'columns' or 'rows'")
-    targets = []
+    targets, offscreen = [], []
     boresight = {"x": 0.5, "y": 0.5}
+    teams = sorted({target.team for target in frame.targets if target.team})
     if frame.rotation is not None and frame.position is not None:
-        rotation = (frame.rotation, frame.position)
+        cframe = (frame.rotation, frame.position)
+        right, up, _ = basis_rows(frame.rotation) if basis_mode == "rows" else basis(frame.rotation)
+
+        def screen(world):
+            return project(cframe, fov, viewport, world, basis_mode)
+
         for target_index, target in enumerate(frame.targets):
-            top = project(rotation, fov, viewport,
-                          (target.position[0], target.position[1] + 0.55 * box_height,
-                           target.position[2]), basis_mode)
-            bottom = project(rotation, fov, viewport,
-                             (target.position[0], target.position[1] - 0.45 * box_height,
-                              target.position[2]), basis_mode)
-            if top is None or bottom is None:
+            teammate = bool(target.team) and target.team == frame.local_team and not target.is_local
+            if settings.team_check and teammate:
                 continue
-            x = (top[0] + bottom[0]) / (2 * viewport[0])
-            y = (top[1] + bottom[1]) / (2 * viewport[1])
-            h = (bottom[1] - top[1]) / viewport[1]
+            parts = dict(target.parts)
+            extremes = [target.position, *parts.values()]
+            if "Head" in parts:
+                head = parts["Head"]
+                extremes.append((head[0], head[1] + HEAD_TOP, head[2]))
+            extremes += [(x, y - FOOT_DROP, z) for name, (x, y, z) in parts.items()
+                         if name in ("LeftFoot", "RightFoot", "Left Leg", "Right Leg")]
+            points = [point for point in map(screen, extremes) if point is not None]
+            if len(points) >= 3:
+                left = min(point[0] for point in points) - BOX_PADDING
+                top = min(point[1] for point in points) - BOX_PADDING
+                width = max(point[0] for point in points) + BOX_PADDING - left
+                height = max(point[1] for point in points) + BOX_PADDING - top
+                x, y = (left + width / 2) / viewport[0], (top + height / 2) / viewport[1]
+                w, h = width / viewport[0], height / viewport[1]
+            else:
+                # No readable limbs: fixed-height estimate around the root part.
+                low = screen((target.position[0], target.position[1] + 0.55 * settings.box_height,
+                              target.position[2]))
+                high = screen((target.position[0], target.position[1] - 0.45 * settings.box_height,
+                               target.position[2]))
+                if low is None or high is None:
+                    x = y = h = -1.0
+                else:
+                    x = (low[0] + high[0]) / (2 * viewport[0])
+                    y = (low[1] + high[1]) / (2 * viewport[1])
+                    h = (high[1] - low[1]) / viewport[1]
+                w = h * settings.box_ratio * viewport[1] / viewport[0]
+            distance = math.dist(frame.position, target.position)
+            team = teams.index(target.team) + 1 if target.team else 0
             if not 0 <= x <= 1 or not 0 <= y <= 1 or not 0.001 < h < 2.5:
+                if not target.is_local:
+                    relative = [target.position[axis] - frame.position[axis] for axis in range(3)]
+                    across = sum(relative[axis] * right[axis] for axis in range(3))
+                    rise = sum(relative[axis] * up[axis] for axis in range(3))
+                    if math.hypot(across, rise) > 1e-6:
+                        offscreen.append({"angle": math.atan2(-rise, across), "name": target.name,
+                                          "distance": distance, "team": team})
                 continue
-            w = h * box_ratio * viewport[1] / viewport[0]
+            bones = []
+            for start_name, end_name in BONES:
+                if start_name in parts and end_name in parts:
+                    start, end = screen(parts[start_name]), screen(parts[end_name])
+                    if start is not None and end is not None:
+                        bones += [start[0] / viewport[0], start[1] / viewport[1],
+                                  end[0] / viewport[0], end[1] / viewport[1]]
+            health = None
+            if target.health is not None and target.max_health:
+                health = min(max(target.health / target.max_health, 0.0), 1.0)
             targets.append({"name": target.name, "x": x, "y": y, "w": w, "h": h,
-                            "target_index": target_index,
-                            "distance": math.dist(frame.position, target.position)})
-    return {"targets": targets, "status": frame.status, "roster": frame.roster_count,
-            "fov": fov, "boresight": boresight, "complete": frame.complete}
+                            "target_index": target_index, "distance": distance, "bones": bones,
+                            "health": health, "team": team, "teammate": teammate})
+    players = []
+    if frame.local_position is not None:
+        for target in frame.targets:
+            if target.is_local:
+                continue
+            health = (min(max(target.health / target.max_health, 0.0), 1.0)
+                      if target.health is not None and target.max_health else None)
+            players.append({"key": target.address, "name": target.name, "health": health,
+                            "distance": math.dist(frame.local_position, target.position),
+                            "team": teams.index(target.team) + 1 if target.team else 0,
+                            "teammate": bool(target.team) and target.team == frame.local_team})
+        players.sort(key=lambda player: player["distance"])
+    return {"targets": targets, "offscreen": offscreen, "players": players, "status": frame.status,
+            "roster": frame.roster_count, "fov": fov, "boresight": boresight, "complete": frame.complete}
+
+
+PLAYER_ACTIONS = ("teleport", "spectate", "stop_spectate")
+TELEPORT_LIFT = 3.0  # studs above the target's root so you land beside, not inside, them
+
+
+def build_spectate(reader):
+    try:
+        return SpectateController(reader), "Not spectating"
+    except ValueError as exc:
+        return None, f"Spectate unavailable: {exc}"
+
+
+def run_player_action(action, key, frame, physics, spectate, now):
+    """One Players-tab request; returns the status line shown under the list."""
+    if action == "stop_spectate":
+        if spectate is None:
+            return "Spectate unavailable"
+        spectate.stop()
+        return spectate.status
+    target = next((target for target in frame.targets if target.address == key and not target.is_local), None)
+    if target is None:
+        return "That player is no longer readable"
+    try:
+        if action == "teleport":
+            if physics is None:
+                return "Teleport unavailable: physics evidence missing"
+            x, y, z = target.position
+            physics.teleport((x, y + TELEPORT_LIFT, z), now)
+            return f"Teleported to {target.name}"
+        if spectate is None:
+            return "Spectate unavailable: run probe_offsets.py subject"
+        spectate.start(target.address, target.name)
+        return spectate.status
+    except (MemoryFault, OSError, ValueError) as exc:
+        return f"{action.title()} failed: {exc}"
 
 
 class UpdateStats:
@@ -112,6 +216,7 @@ class Overlay:
         self.quit_requested = False
         self.pending_input = None
         self.pending_explorer = False
+        self.pending_actions = []
         command = [str(executable), str(pid)]
         command.append(str(inset_top))
         environment, options = helper_identity()
@@ -148,6 +253,12 @@ class Overlay:
                 if event.get("type") == "explorer_refresh":
                     with self.lock:
                         self.pending_explorer = True
+                    continue
+                if event.get("type") == "player_action":
+                    if event.get("action") not in PLAYER_ACTIONS or type(event.get("key")) is not int:
+                        raise ValueError("invalid player action")
+                    with self.lock:
+                        self.pending_actions.append((event["action"], event["key"]))
                     continue
                 size = float(event["width"]), float(event["height"])
                 if all(math.isfinite(value) and value > 0 for value in size):
@@ -195,6 +306,11 @@ class Overlay:
             state, self.pending_input = self.pending_input, None
         return state
 
+    def take_actions(self):
+        with self.lock:
+            actions, self.pending_actions = self.pending_actions, []
+        return actions
+
     def take_explorer(self):
         with self.lock:
             pending, self.pending_explorer = self.pending_explorer, False
@@ -233,11 +349,7 @@ class Overlay:
 
 @contextlib.contextmanager
 def launch_overlay(pid, args):
-    compiler = shutil.which("swiftc")
-    if compiler is None:
-        raise RuntimeError("Swift compiler not found; install Xcode Command Line Tools or use --headless")
-    source = Path(__file__).resolve().parent / "rbxl" / "esp_overlay.swift"
-    executable = build_helper(compiler, source)
+    executable = build_overlay()
     overlay = Overlay(executable, pid, args.inset_top, (args.width, args.height))
     try:
         overlay.wait_ready()
@@ -360,17 +472,8 @@ def parse_control(line: str, state, overlay=None):
 
 def arguments(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    profile = Path(__file__).resolve().parent / "profiles" / "0.745.0.7451137"
-    parser.add_argument("--report", type=Path, default=profile / "offsets.json")
-    parser.add_argument("--camera-evidence", type=Path,
-                        default=profile / "camera.json",
-                        help="same-binary static Camera getter evidence (no new live dump needed)")
-    parser.add_argument("--movement-evidence", type=Path,
-                        default=profile / "movement.json",
-                        help="same-binary movement field evidence; movement is off until enabled in the GUI")
-    parser.add_argument("--physics-evidence", type=Path,
-                        default=profile / "physics.json",
-                        help="same-binary collision/assembly-PV evidence for Noclip and Infinite Jump")
+    parser.add_argument("--profile", type=Path,
+                        help="profile directory; default: the one matching the installed Roblox binary")
     parser.add_argument("--pid", type=int)
     parser.add_argument("--fps", type=float, default=60.0,
                         help="target fresh memory samples per second (default: 60; actual rate is shown)")
@@ -423,14 +526,14 @@ def build_controllers(reader, args, spec):
     except ValueError as exc:
         print(f"[camera-aim] unavailable: {exc}", flush=True)
     try:
-        movement_spec = MovementSpec.from_evidence(args.movement_evidence, spec.binary_sha256)
+        movement_spec = MovementSpec.from_evidence(args.profile / "movement.json", spec.binary_sha256)
         movement = MovementController(reader, movement_spec)
         movement_status = movement.status
     except (OSError, ValueError, KeyError) as exc:
         movement_status = f"Movement unavailable: {exc}"
         print(f"[movement] {movement_status}", flush=True)
     try:
-        physics = PhysicsController(reader, PhysicsSpec.from_evidence(args.physics_evidence, spec.binary_sha256))
+        physics = PhysicsController(reader, PhysicsSpec.from_evidence(args.profile / "physics.json", spec.binary_sha256))
         physics_status = physics.status
     except (OSError, ValueError, KeyError) as exc:
         physics_status = f"Noclip/Infinite Jump unavailable: {exc}"
@@ -439,8 +542,8 @@ def build_controllers(reader, args, spec):
             physics, physics_status, camera_aim)
 
 
-def close_controllers(camera_control, movement, physics):
-    for controller in (camera_control, physics, movement):
+def close_controllers(camera_control, movement, physics, spectate=None):
+    for controller in (spectate, camera_control, physics, movement):
         if controller is not None:
             try:
                 controller.close()
@@ -454,12 +557,17 @@ def main(argv=None):
     camera_control = None
     physics = None
     camera_aim = None
+    spectate = None
+    player_status = "Not spectating"
     reader = None
     recovery = None
     try:
         if sys.platform != "darwin" or platform.machine() != "arm64":
             raise RuntimeError("WeirdExt requires native ARM64 macOS, not Windows, Linux or Rosetta")
-        spec = OffsetSpec.from_report(args.report).with_camera_evidence(args.camera_evidence)
+        args.profile = args.profile or select_profile()
+        print(f"[esp] profile {args.profile.name}", flush=True)
+        spec = OffsetSpec.from_report(args.profile / "offsets.json").with_camera_evidence(
+            args.profile / "camera.json")
         pid = args.pid or find_roblox_pid()
         if pid is None:
             raise RuntimeError("Roblox is not running")
@@ -485,6 +593,7 @@ def main(argv=None):
             if reader is not None:
                 (camera_control, camera_status, movement, movement_status,
                  physics, physics_status, camera_aim) = build_controllers(reader, args, spec)
+                spectate, player_status = build_spectate(reader)
             state = {"inset": None, "quit": False, "basis_mode": "columns"}
             control = threading.Thread(target=_pump_controls, args=(state, overlay), daemon=True)
             control.start()
@@ -499,6 +608,7 @@ def main(argv=None):
             last_console = -math.inf
             last_movement = -math.inf
             last_aim = started
+            aim_lock = None
             explorer_open = False
             health = SessionHealth()
             last_pid_check = started
@@ -531,6 +641,7 @@ def main(argv=None):
                         pid, reader = attached
                         (camera_control, camera_status, movement, movement_status,
                          physics, physics_status, camera_aim) = build_controllers(reader, args, spec)
+                        spectate, player_status = build_spectate(reader)
                         if physics is not None:
                             physics.space_seen = inputs.space_presses
                         inputs = InputState(space_presses=inputs.space_presses)
@@ -553,12 +664,13 @@ def main(argv=None):
                                 raise RuntimeError(f"Roblox process changed: {pid} → {current_pid}")
                         # Validate the tree and camera before any controller tick.
                         # Readable RTTI alone is not ownership.
-                        frame = reader.snapshot(settings.show_local)
+                        frame = reader.snapshot(settings.show_local, settings.esp_skeleton)
                         if not health.observe(frame, tick):
                             raise RuntimeError(f"session stayed incomplete: {frame.status}")
                         if frame.complete and frame.fov is not None:
                             if physics is not None:
-                                physics.tick(settings, inputs, time.monotonic())
+                                physics.tick(settings, inputs, time.monotonic(), frame.rotation,
+                                             state["basis_mode"])
                                 physics_status = physics.status
                             if tick - last_movement >= 0.1:
                                 if movement is not None:
@@ -568,6 +680,13 @@ def main(argv=None):
                                     camera_control.tick(settings)
                                     camera_status = camera_control.status
                                 last_movement = tick
+                            if spectate is not None:
+                                spectate.tick({address for address, _ in frame.roster})
+                                player_status = spectate.status
+                            for action, key in (overlay.take_actions() if overlay else ()):
+                                player_status = run_player_action(action, key, frame, physics, spectate,
+                                                                  time.monotonic())
+                                print(f"[players] {player_status}", flush=True)
                             if rejoining:
                                 session.observe_rejoin(tick)
                                 rejoining = False
@@ -577,7 +696,8 @@ def main(argv=None):
                     print(f"[session] invalidated ({exc}); waiting for the next game", flush=True)
                     # Do not restore fields into a detached game tree.
                     # Restoration is only attempted on a validated shutdown.
-                    movement = camera_control = physics = camera_aim = None
+                    movement = camera_control = physics = camera_aim = spectate = None
+                    player_status = "Waiting for next game"
                     SessionRecovery._dispose(reader)
                     reader = None
                     inputs = InputState(space_presses=inputs.space_presses)
@@ -598,8 +718,11 @@ def main(argv=None):
                 viewport = overlay.size() if overlay else (args.width, args.height)
                 elapsed = tick - last_aim
                 last_aim = tick
-                step = (aim_step(frame, fov, viewport, settings, elapsed, state["basis_mode"])
+                # The sticky lock lasts one right-mouse hold.
+                aim_lock = aim_lock if inputs.aim_held else None
+                step = (aim_step(frame, fov, viewport, settings, elapsed, state["basis_mode"], aim_lock)
                         if frame.complete and timing["read_ms"] < 50 else None)
+                aim_lock = step["key"] if step is not None else None
                 if camera_aim is not None and step is not None and frame.complete:
                     try:
                         rotation = camera_aim.tick(frame, step, settings, inputs, elapsed, time.monotonic())
@@ -608,8 +731,7 @@ def main(argv=None):
                     except (MemoryFault, OSError, RuntimeError) as exc:
                         camera_aim = None
                         print(f"[camera-aim] paused: {exc}", flush=True)
-                packet = display_packet(frame, fov, viewport, settings.box_height, settings.box_ratio,
-                                        state["basis_mode"])
+                packet = display_packet(frame, fov, viewport, settings, state["basis_mode"])
                 packet.update(timing)
                 packet.update(options=settings.overlay_options(), movement_available=movement is not None,
                               movement_status=movement_status, camera_available=camera_control is not None,
@@ -618,6 +740,9 @@ def main(argv=None):
                               noclip_available=physics is not None, noclip_status=physics_status,
                               toasts=session.feed(tick))
                 packet["aim"] = step
+                packet.update(spectating=spectate.target if spectate is not None else 0,
+                              player_status=player_status, spectate_available=spectate is not None,
+                              teleport_available=physics is not None and bool(physics.spec.solver_positions))
                 if overlay:
                     if not overlay.send(packet):
                         print("[esp] overlay closed", flush=True)
@@ -668,7 +793,7 @@ def main(argv=None):
         if reader is not None:
             try:
                 reader.validate_session()
-                close_controllers(camera_control, movement, physics)
+                close_controllers(camera_control, movement, physics, spectate)
             except Exception as exc:
                 print(f"[session] skipping stale restoration: {exc}", flush=True)
             SessionRecovery._dispose(reader)
