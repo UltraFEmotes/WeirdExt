@@ -3,13 +3,13 @@
     "platform": "macOS ARM64 (Apple Silicon)",
     "roblox_version": "0.745.0.7451137",
     "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
-    "dumped_at": "2026-11-14 21:05 UTC",
+    "dumped_at": "2026-11-14 21:08 UTC",
     "dumper": "WeirdExt export_offsets.py",
-    "total": 2318,
-    "confirmed_live": 29,
-    "reflected": 2289,
-    "dropped_by_live_check": 0,
-    "promoted_by_live_check": 0
+    "total": 2334,
+    "confirmed_live": 33,
+    "reflected": 2301,
+    "dropped_by_live_check": 14,
+    "promoted_by_live_check": 26
   },
   "offsets": {
     "Instance": {
@@ -46,7 +46,6 @@
       "CanLoadCharacterAppearance": "0x383",
       "CharacterAppearance": "0xc0",
       "CharacterAppearanceId": "0x2c0",
-      "ChararacterRegionId": "0x308",
       "ChatAvailabilityStatus": "0xd8",
       "ChatPrivacyMode": "0x334",
       "CloudEditCameraCoordinateFrame": "0x2d8",
@@ -129,7 +128,6 @@
       "StreamingTargetRadius": "0x51c",
       "ThrottleLevel": "0x520",
       "TouchEventsUseCollisionGroups": "0x524",
-      "TouchesUseCollisionGroups": "0x3b8",
       "UseInputSink": "0x52c",
       "UseNewLuauTypeSolver": "0x530",
       "ValidateEnabledProximityPrompt": "0x534",
@@ -165,9 +163,12 @@
       "Massless": "0x11a",
       "Material": "0x24e",
       "NetworkOwnershipRule": "0x26a",
+      "Position": "0xa8",
       "Reflectance": "0xec",
+      "RotVelocity": "0xa8",
       "Size": "0x1c4",
       "Transparency": "0x110",
+      "Velocity": "0xa8",
       "size": "0x1c4"
     },
     "Primitive": {
@@ -175,6 +176,13 @@
       "Position": "0xd4",
       "Flags": "0x1be",
       "AssemblyLinearVelocity": "0xe0"
+    },
+    "DataModel": {
+      "PlaceId": "0x170",
+      "GameId": "0x168",
+      "CreatorId": "0x160",
+      "JobId": "0x108",
+      "ForceR15": "0x190"
     },
     "Humanoid": {
       "Health": "0x174",
@@ -397,10 +405,14 @@
     },
     "Attachment": {
       "Axis": "0xa0",
-      "CFrame": "0xa0",
+      "Orientation": "0xa8",
       "Position": "0xac",
+      "Rotation": "0xa8",
       "SecondaryAxis": "0xb8",
-      "Visible": "0xc4"
+      "Visible": "0xc4",
+      "WorldAxis": "0xa0",
+      "WorldPosition": "0xb4",
+      "WorldSecondaryAxis": "0xb8"
     },
     "AudioSearchParams": {
       "Album": "0xa0",
@@ -673,7 +685,6 @@
       "ExtentsOffset": "0x6c8",
       "ExtentsOffsetWorldSpace": "0x6d4",
       "LightInfluence": "0x714",
-      "MaxDistance": "0x718",
       "Size": "0x6b8",
       "SizeOffset": "0x6f8",
       "StudsOffset": "0x6e0",
@@ -786,6 +797,8 @@
       "CFrame": "0xb8"
     },
     "CanvasGroup": {
+      "GroupColor3": "0x99c",
+      "GroupTransparency": "0x9a8",
       "ResolutionScale": "0x9ac"
     },
     "CapturesViewConfiguration": {
@@ -1090,15 +1103,15 @@
       "MoveSpeedFactor": "0xa0"
     },
     "ControllerManager": {
-      "ActiveController": "0x8",
-      "BaseMoveSpeed": "0x6c",
-      "BaseTurnSpeed": "0x70",
-      "ClimbSensor": "0x18",
-      "FacingDirection": "0x48",
-      "GroundSensor": "0x28",
-      "MovingDirection": "0x54",
-      "RootPart": "0x38",
-      "UpDirection": "0x60"
+      "ActiveController": "0xa0",
+      "BaseMoveSpeed": "0x104",
+      "BaseTurnSpeed": "0x108",
+      "ClimbSensor": "0xb0",
+      "FacingDirection": "0xe0",
+      "GroundSensor": "0xc0",
+      "MovingDirection": "0xec",
+      "RootPart": "0xd0",
+      "UpDirection": "0xf8"
     },
     "ControllerPartSensor": {
       "LadderSearchHeight": "0x27c",
@@ -1159,9 +1172,6 @@
       "InnerRadius": "0x194",
       "Radius": "0x198",
       "Shading": "0x19c"
-    },
-    "DataModel": {
-      "ForceR15": "0xa8"
     },
     "DataModelMesh": {
       "Offset": "0xa0",
@@ -1503,6 +1513,9 @@
       "MouseButton2UpConnectionCount": "0x9e4",
       "Selected": "0x9ee"
     },
+    "GuiImageButton": {
+      "ImageColor3": "0xd98"
+    },
     "GuiLayerCollector": {
       "Enabled": "0x494",
       "ResetOnSpawn": "0x495",
@@ -1510,6 +1523,8 @@
       "ZIndexBehavior": "0x490"
     },
     "GuiObject": {
+      "BackgroundColor3": "0x510",
+      "BorderColor3": "0x51c",
       "DragBeginConnectionCount": "0x540",
       "DragStoppedConnectionCount": "0x544",
       "Draggable": "0x57a",
@@ -1729,6 +1744,9 @@
       "DoubleSided": "0x1c0",
       "Size": "0x1b8"
     },
+    "ImageLabel": {
+      "ImageColor3": "0xac0"
+    },
     "IncrementalPatchBuilder": {
       "AddPathsToBundle": "0xb0",
       "BuildDebouncePeriod": "0x170",
@@ -1805,6 +1823,7 @@
     "Lighting": {
       "Ambient": "0xb8",
       "Brightness": "0x100",
+      "ClockTime": "0xb0",
       "ColorShift_Bottom": "0xc4",
       "ColorShift_Top": "0xd0",
       "EnvironmentDiffuseScale": "0x104",
@@ -1832,7 +1851,6 @@
       "ForcePlayModeRobloxLocaleId": "0xc8",
       "GameSourceLanguageId": "0xe0",
       "IsImageCaptureEnabled": "0x108",
-      "IsTextScraperRunning": "0x240",
       "RobloxForcePlayModeGameLocaleId": "0xb0",
       "RobloxForcePlayModeRobloxLocaleId": "0xc8",
       "ShouldUseCloudTable": "0x109",
@@ -1904,7 +1922,6 @@
       "DoubleSided": "0x33c",
       "HasJointOffset": "0x33d",
       "HasSkinnedMesh": "0x33e",
-      "InitialSize": "0x400",
       "JointOffset": "0x328",
       "MeshContent": "0x2d0",
       "RenderFidelity": "0x334",
@@ -1934,8 +1951,7 @@
       "Source": "0x108"
     },
     "Motor6D": {
-      "EnableSkinning": "0x198",
-      "Transform": "0x168"
+      "EnableSkinning": "0x198"
     },
     "NegateOperation": {
       "PreviousOperation": "0x3c0"
@@ -1975,7 +1991,6 @@
       "ChildData2": "0x348",
       "ComponentIndex": "0x360",
       "DCDPropertyData": "0x310",
-      "InitialSize": "0x400",
       "MeshData": "0x328",
       "MeshData2": "0x358",
       "OffCentered": "0x374",
@@ -2231,6 +2246,7 @@
     },
     "ScrollingFrame": {
       "CanvasPosition": "0xa64",
+      "ScrollBarImageColor3": "0xa50",
       "ScrollRate": "0xa94",
       "SmoothScroll": "0xaa5"
     },
@@ -2542,8 +2558,6 @@
       "RollOffMaxDistance": "0x100",
       "RollOffMinDistance": "0x104",
       "RollOffMode": "0x108",
-      "TimePosition": "0x1f0",
-      "TimePositionReplicator": "0x1f0",
       "UsageContextPermission": "0x10c",
       "Volume": "0x110",
       "xmlRead_MaxDistance_3": "0x100",
@@ -2762,10 +2776,12 @@
       "LocalizationMatchedSourceText": "0xe10",
       "ManualFocusRelease": "0xedb",
       "OverlayNativeInput": "0xedd",
+      "PlaceholderColor3": "0xe80",
       "ReturnKeyType": "0xeb0",
       "ShouldEmitReturnEvents": "0xedf",
       "ShouldEmitTabEvents": "0xee0",
       "ShouldEmitUpAndDownArrowEvents": "0xee1",
+      "TextColor3": "0xe8c",
       "TextInputType": "0xebc"
     },
     "TextChannel": {
@@ -2821,7 +2837,9 @@
     "TextLabel": {
       "Confidential": "0xea4",
       "LocalizationMatchIdentifier": "0xdf8",
-      "LocalizationMatchedSourceText": "0xe10"
+      "LocalizationMatchedSourceText": "0xe10",
+      "TextColor3": "0xe68",
+      "TextStrokeColor3": "0xe74"
     },
     "TextSource": {
       "CanSend": "0xd0",
@@ -2858,11 +2876,10 @@
     },
     "TriangleMeshPart": {
       "InertiaMigrated": "0x238",
-      "PCDRequestId": "0x230",
-      "UnscaledCofm": "0x20c",
-      "UnscaledVolInertiaDiags": "0x218",
-      "UnscaledVolInertiaOffDiags": "0x224",
-      "UnscaledVolume": "0x234"
+      "PCDRequestId": "0x230"
+    },
+    "UIAspectRatioConstraint": {
+      "AspectRatio": "0xa8"
     },
     "UIDragDetector": {
       "BoundingBehavior": "0x178",
@@ -2885,6 +2902,10 @@
       "SelectionModeRotateSpeed": "0x198",
       "UIDragSpeedAxisMapping": "0x19c"
     },
+    "UIGradient": {
+      "Rotation": "0x120",
+      "Scale": "0x124"
+    },
     "UIPageLayout": {
       "Animated": "0x154",
       "Circular": "0x155",
@@ -2895,6 +2916,13 @@
       "ScrollWheelInputEnabled": "0x157",
       "TouchInputEnabled": "0x158",
       "TweenTime": "0x150"
+    },
+    "UISizeConstraint": {
+      "MinSize": "0xb0"
+    },
+    "UIStroke": {
+      "Color": "0xa8",
+      "Thickness": "0xcc"
     },
     "UITableLayout": {
       "FillEmptySpaceColumns": "0x14c",

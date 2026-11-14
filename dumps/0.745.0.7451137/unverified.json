@@ -3,13 +3,13 @@
     "platform": "macOS ARM64 (Apple Silicon)",
     "roblox_version": "0.745.0.7451137",
     "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
-    "dumped_at": "2026-11-14 21:05 UTC",
+    "dumped_at": "2026-11-14 21:08 UTC",
     "dumper": "WeirdExt export_offsets.py",
-    "total": 2318,
-    "confirmed_live": 29,
-    "reflected": 2289,
-    "dropped_by_live_check": 0,
-    "promoted_by_live_check": 0,
+    "total": 2334,
+    "confirmed_live": 33,
+    "reflected": 2301,
+    "dropped_by_live_check": 14,
+    "promoted_by_live_check": 26,
     "note": "heuristic getter decodes; confirm live before use"
   },
   "offsets": {
@@ -99,28 +99,7 @@
         "type": "int"
       }
     },
-    "Attachment": {
-      "Orientation": {
-        "offset": "0xa8",
-        "type": "Vector3"
-      },
-      "Rotation": {
-        "offset": "0xa8",
-        "type": "Vector3"
-      },
-      "WorldAxis": {
-        "offset": "0xa0",
-        "type": "Vector3"
-      },
-      "WorldPosition": {
-        "offset": "0xb4",
-        "type": "Vector3"
-      },
-      "WorldSecondaryAxis": {
-        "offset": "0xb8",
-        "type": "Vector3"
-      }
-    },
+    "Attachment": {},
     "AuroraScript": {
       "Source": {
         "offset": "0xe0",
@@ -212,24 +191,12 @@
         "offset": "0xc0",
         "type": "CoordinateFrame"
       },
-      "Position": {
-        "offset": "0xa8",
-        "type": "Vector3"
-      },
       "RootPriority": {
         "offset": "0x168",
         "type": "int"
       },
-      "RotVelocity": {
-        "offset": "0xa8",
-        "type": "Vector3"
-      },
       "Rotation": {
         "offset": "0xa0",
-        "type": "Vector3"
-      },
-      "Velocity": {
-        "offset": "0xa8",
         "type": "Vector3"
       }
     },
@@ -361,16 +328,7 @@
         "type": "Enums::ViewMode"
       }
     },
-    "CanvasGroup": {
-      "GroupColor3": {
-        "offset": "0x99c",
-        "type": "Color3"
-      },
-      "GroupTransparency": {
-        "offset": "0x9a8",
-        "type": "float"
-      }
-    },
+    "CanvasGroup": {},
     "ChannelTabsConfiguration": {
       "FontFace": {
         "offset": "0xa8",
@@ -539,11 +497,11 @@
     },
     "DataModel": {
       "GameAvatarType": {
-        "offset": "0x0",
+        "offset": "-0x1f0",
         "type": "GameAvatarType"
       },
       "R15CollisionType": {
-        "offset": "0x0",
+        "offset": "-0x1f0",
         "type": "R15CollisionType"
       }
     },
@@ -818,10 +776,6 @@
         "offset": "0xcd0",
         "type": "ContentId"
       },
-      "ImageColor3": {
-        "offset": "0xd98",
-        "type": "Color3"
-      },
       "ImageContent": {
         "offset": "0xcd0",
         "type": "Content"
@@ -884,17 +838,9 @@
         "offset": "0x488",
         "type": "Enums::AutomaticSize"
       },
-      "BackgroundColor3": {
-        "offset": "0x510",
-        "type": "Color3"
-      },
       "BackgroundTransparency": {
         "offset": "0x488",
         "type": "float"
-      },
-      "BorderColor3": {
-        "offset": "0x51c",
-        "type": "Color3"
       },
       "BorderMode": {
         "offset": "0x488",
@@ -1154,10 +1100,6 @@
         "offset": "0xa48",
         "type": "ContentId"
       },
-      "ImageColor3": {
-        "offset": "0xac0",
-        "type": "Color3"
-      },
       "ImageContent": {
         "offset": "0xa48",
         "type": "Content"
@@ -1316,10 +1258,6 @@
       }
     },
     "Lighting": {
-      "ClockTime": {
-        "offset": "0xb0",
-        "type": "float"
-      },
       "Technology": {
         "offset": "0x128",
         "type": "LightingTechnology"
@@ -1734,10 +1672,6 @@
         "offset": "0x9a0",
         "type": "Content"
       },
-      "ScrollBarImageColor3": {
-        "offset": "0xa50",
-        "type": "Color3"
-      },
       "ScrollBarImageTransparency": {
         "offset": "0x9a0",
         "type": "float"
@@ -2112,10 +2046,6 @@
         "offset": "0xdd8",
         "type": null
       },
-      "PlaceholderColor3": {
-        "offset": "0xe80",
-        "type": "Color3"
-      },
       "PlaceholderText": {
         "offset": "0xdd8",
         "type": null
@@ -2131,10 +2061,6 @@
       "Text": {
         "offset": "0xe58",
         "type": null
-      },
-      "TextColor3": {
-        "offset": "0xe8c",
-        "type": "Color3"
       },
       "TextDirection": {
         "offset": "0xdd8",
@@ -2266,10 +2192,6 @@
         "offset": "0xe40",
         "type": null
       },
-      "TextColor3": {
-        "offset": "0xe68",
-        "type": "Color3"
-      },
       "TextDirection": {
         "offset": "0xdd8",
         "type": "Text::TextDirection"
@@ -2281,10 +2203,6 @@
       "TextSize": {
         "offset": "0xdd8",
         "type": "float"
-      },
-      "TextStrokeColor3": {
-        "offset": "0xe74",
-        "type": "Color3"
       },
       "TextStrokeTransparency": {
         "offset": "0xdd8",
@@ -2374,10 +2292,6 @@
       }
     },
     "UIAspectRatioConstraint": {
-      "AspectRatio": {
-        "offset": "0xa8",
-        "type": "float"
-      },
       "AspectType": {
         "offset": "0xac",
         "type": "Enums::AspectTypeEnum::AspectType"
@@ -2475,14 +2389,6 @@
       "Offset": {
         "offset": "0x118",
         "type": "Vector2"
-      },
-      "Rotation": {
-        "offset": "0x120",
-        "type": "float"
-      },
-      "Scale": {
-        "offset": "0x124",
-        "type": "float"
       },
       "TileMode": {
         "offset": "0x128",
@@ -2629,10 +2535,6 @@
       "MaxSize": {
         "offset": "0xa8",
         "type": "Vector2"
-      },
-      "MinSize": {
-        "offset": "0xb0",
-        "type": "Vector2"
       }
     },
     "UIStroke": {
@@ -2648,10 +2550,6 @@
         "offset": "0xc0",
         "type": "Enums::BorderStrokePosition"
       },
-      "Color": {
-        "offset": "0xa8",
-        "type": "Color3"
-      },
       "Enabled": {
         "offset": "0xd8",
         "type": "bool"
@@ -2663,10 +2561,6 @@
       "StrokeSizingMode": {
         "offset": "0xc8",
         "type": "Enums::StrokeSizingMode"
-      },
-      "Thickness": {
-        "offset": "0xcc",
-        "type": "float"
       },
       "Transparency": {
         "offset": "0xd0",

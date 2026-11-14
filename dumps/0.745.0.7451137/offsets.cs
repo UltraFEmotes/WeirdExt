@@ -2,8 +2,8 @@
 //
 // Roblox Version  : 0.745.0.7451137
 // Binary SHA-256  : 8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7
-// Dumped At       : 2026-11-14 21:05 UTC
-// Total Offsets   : 2318 (29 confirmed live, 2289 from reflection)
+// Dumped At       : 2026-11-14 21:08 UTC
+// Total Offsets   : 2334 (33 confirmed live, 2301 from reflection)
 //
 // macOS layouts differ from Windows; use these with the macOS client only.
 
@@ -46,7 +46,6 @@ namespace Offsets
         public const long CanLoadCharacterAppearance = 0x383;  // bool
         public const long CharacterAppearance = 0xc0;
         public const long CharacterAppearanceId = 0x2c0;  // int64
-        public const long ChararacterRegionId = 0x308;  // Vector3
         public const long ChatAvailabilityStatus = 0xd8;
         public const long ChatPrivacyMode = 0x334;  // Enums::ChatPrivacyModeEnum::ChatPrivacyMode
         public const long CloudEditCameraCoordinateFrame = 0x2d8;  // CoordinateFrame
@@ -130,7 +129,6 @@ namespace Offsets
         public const long StreamingTargetRadius = 0x51c;  // int
         public const long ThrottleLevel = 0x520;  // int
         public const long TouchEventsUseCollisionGroups = 0x524;  // Enums::RolloutState
-        public const long TouchesUseCollisionGroups = 0x3b8;  // bool
         public const long UseInputSink = 0x52c;  // Enums::RolloutState
         public const long UseNewLuauTypeSolver = 0x530;  // Enums::RolloutState
         public const long ValidateEnabledProximityPrompt = 0x534;  // Enums::RolloutState
@@ -168,9 +166,12 @@ namespace Offsets
         public const long Massless = 0x11a;  // bool
         public const long Material = 0x24e;  // MaterialType; at *(object + 0x168) + this
         public const long NetworkOwnershipRule = 0x26a;  // NetworkOwnership; at *(object + 0x168) + this
+        public const long Position = 0xa8;  // Vector3; heuristic decode, passed live check
         public const long Reflectance = 0xec;  // float
+        public const long RotVelocity = 0xa8;  // Vector3; heuristic decode, passed live check
         public const long Size = 0x1c4;  // Vector3; at *(object + 0x168) + this
         public const long Transparency = 0x110;  // float
+        public const long Velocity = 0xa8;  // Vector3; heuristic decode, passed live check
         public const long size = 0x1c4;  // Vector3; at *(object + 0x168) + this
     }
     public static class Primitive
@@ -179,6 +180,14 @@ namespace Offsets
         public const long Position = 0xd4;
         public const long Flags = 0x1be;
         public const long AssemblyLinearVelocity = 0xe0;  // copy refreshed from the solver body each physics step
+    }
+    public static class DataModel
+    {
+        public const long PlaceId = 0x170;  // int64
+        public const long GameId = 0x168;  // int64 (universe id)
+        public const long CreatorId = 0x160;  // int64
+        public const long JobId = 0x108;  // std::string
+        public const long ForceR15 = 0x190;  // bool
     }
     public static class Humanoid
     {
@@ -423,10 +432,14 @@ namespace Offsets
     public static class Attachment
     {
         public const long Axis = 0xa0;  // Vector3
-        public const long CFrame = 0xa0;  // CoordinateFrame
+        public const long Orientation = 0xa8;  // Vector3; heuristic decode, passed live check
         public const long Position = 0xac;  // Vector3
+        public const long Rotation = 0xa8;  // Vector3; heuristic decode, passed live check
         public const long SecondaryAxis = 0xb8;  // Vector3
         public const long Visible = 0xc4;  // bool
+        public const long WorldAxis = 0xa0;  // Vector3; heuristic decode, passed live check
+        public const long WorldPosition = 0xb4;  // Vector3; heuristic decode, passed live check
+        public const long WorldSecondaryAxis = 0xb8;  // Vector3; heuristic decode, passed live check
     }
     public static class AudioSearchParams
     {
@@ -717,7 +730,6 @@ namespace Offsets
         public const long ExtentsOffset = 0x6c8;  // Vector3
         public const long ExtentsOffsetWorldSpace = 0x6d4;  // Vector3
         public const long LightInfluence = 0x714;  // float
-        public const long MaxDistance = 0x718;  // float
         public const long Size = 0x6b8;  // UDim2
         public const long SizeOffset = 0x6f8;  // Vector2
         public const long StudsOffset = 0x6e0;  // Vector3
@@ -848,6 +860,8 @@ namespace Offsets
     }
     public static class CanvasGroup
     {
+        public const long GroupColor3 = 0x99c;  // Color3; heuristic decode, passed live check
+        public const long GroupTransparency = 0x9a8;  // float; heuristic decode, passed live check
         public const long ResolutionScale = 0x9ac;  // float
     }
     public static class CapturesViewConfiguration
@@ -1193,15 +1207,15 @@ namespace Offsets
     }
     public static class ControllerManager
     {
-        public const long ActiveController = 0x8;
-        public const long BaseMoveSpeed = 0x6c;  // float
-        public const long BaseTurnSpeed = 0x70;  // float
-        public const long ClimbSensor = 0x18;
-        public const long FacingDirection = 0x48;  // Vector3
-        public const long GroundSensor = 0x28;
-        public const long MovingDirection = 0x54;  // Vector3
-        public const long RootPart = 0x38;
-        public const long UpDirection = 0x60;  // Vector3
+        public const long ActiveController = 0xa0;
+        public const long BaseMoveSpeed = 0x104;  // float
+        public const long BaseTurnSpeed = 0x108;  // float
+        public const long ClimbSensor = 0xb0;
+        public const long FacingDirection = 0xe0;  // Vector3
+        public const long GroundSensor = 0xc0;
+        public const long MovingDirection = 0xec;  // Vector3
+        public const long RootPart = 0xd0;
+        public const long UpDirection = 0xf8;  // Vector3
     }
     public static class ControllerPartSensor
     {
@@ -1267,10 +1281,6 @@ namespace Offsets
         public const long InnerRadius = 0x194;  // float
         public const long Radius = 0x198;  // float
         public const long Shading = 0x19c;  // Enums::AdornShading
-    }
-    public static class DataModel
-    {
-        public const long ForceR15 = 0xa8;  // bool
     }
     public static class DataModelMesh
     {
@@ -1654,6 +1664,10 @@ namespace Offsets
         public const long MouseButton2UpConnectionCount = 0x9e4;  // int
         public const long Selected = 0x9ee;  // bool
     }
+    public static class GuiImageButton
+    {
+        public const long ImageColor3 = 0xd98;  // Color3; heuristic decode, passed live check
+    }
     public static class GuiLayerCollector
     {
         public const long Enabled = 0x494;  // bool
@@ -1663,6 +1677,8 @@ namespace Offsets
     }
     public static class GuiObject
     {
+        public const long BackgroundColor3 = 0x510;  // Color3; heuristic decode, passed live check
+        public const long BorderColor3 = 0x51c;  // Color3; heuristic decode, passed live check
         public const long DragBeginConnectionCount = 0x540;  // int
         public const long DragStoppedConnectionCount = 0x544;  // int
         public const long Draggable = 0x57a;  // bool
@@ -1895,6 +1911,10 @@ namespace Offsets
         public const long DoubleSided = 0x1c0;  // bool
         public const long Size = 0x1b8;  // Vector2
     }
+    public static class ImageLabel
+    {
+        public const long ImageColor3 = 0xac0;  // Color3; heuristic decode, passed live check
+    }
     public static class IncrementalPatchBuilder
     {
         public const long AddPathsToBundle = 0xb0;  // bool
@@ -1985,6 +2005,7 @@ namespace Offsets
     {
         public const long Ambient = 0xb8;  // Color3
         public const long Brightness = 0x100;  // float
+        public const long ClockTime = 0xb0;  // float; heuristic decode, passed live check
         public const long ColorShift_Bottom = 0xc4;  // Color3
         public const long ColorShift_Top = 0xd0;  // Color3
         public const long EnvironmentDiffuseScale = 0x104;  // float
@@ -2014,7 +2035,6 @@ namespace Offsets
         public const long ForcePlayModeRobloxLocaleId = 0xc8;
         public const long GameSourceLanguageId = 0xe0;
         public const long IsImageCaptureEnabled = 0x108;  // bool
-        public const long IsTextScraperRunning = 0x240;  // bool
         public const long RobloxForcePlayModeGameLocaleId = 0xb0;
         public const long RobloxForcePlayModeRobloxLocaleId = 0xc8;
         public const long ShouldUseCloudTable = 0x109;  // bool
@@ -2094,7 +2114,6 @@ namespace Offsets
         public const long DoubleSided = 0x33c;  // bool
         public const long HasJointOffset = 0x33d;  // bool
         public const long HasSkinnedMesh = 0x33e;  // bool
-        public const long InitialSize = 0x400;  // Vector3
         public const long JointOffset = 0x328;  // Vector3
         public const long MeshContent = 0x2d0;  // Content
         public const long RenderFidelity = 0x334;  // RenderFidelity
@@ -2130,7 +2149,6 @@ namespace Offsets
     public static class Motor6D
     {
         public const long EnableSkinning = 0x198;  // bool
-        public const long Transform = 0x168;  // CoordinateFrame
     }
     public static class NegateOperation
     {
@@ -2177,7 +2195,6 @@ namespace Offsets
         public const long ChildData2 = 0x348;  // SharedString
         public const long ComponentIndex = 0x360;  // int
         public const long DCDPropertyData = 0x310;  // CSGPropertyData
-        public const long InitialSize = 0x400;  // Vector3
         public const long MeshData = 0x328;  // BinaryString
         public const long MeshData2 = 0x358;  // SharedString
         public const long OffCentered = 0x374;  // bool
@@ -2473,6 +2490,7 @@ namespace Offsets
     public static class ScrollingFrame
     {
         public const long CanvasPosition = 0xa64;  // Vector2
+        public const long ScrollBarImageColor3 = 0xa50;  // Color3; heuristic decode, passed live check
         public const long ScrollRate = 0xa94;  // float
         public const long SmoothScroll = 0xaa5;  // bool
     }
@@ -2831,8 +2849,6 @@ namespace Offsets
         public const long RollOffMaxDistance = 0x100;  // float
         public const long RollOffMinDistance = 0x104;  // float
         public const long RollOffMode = 0x108;
-        public const long TimePosition = 0x1f0;  // double
-        public const long TimePositionReplicator = 0x1f0;  // double
         public const long UsageContextPermission = 0x10c;  // UsageContext
         public const long Volume = 0x110;  // float
         public const long xmlRead_MaxDistance_3 = 0x100;  // float
@@ -3082,10 +3098,12 @@ namespace Offsets
         public const long LocalizationMatchedSourceText = 0xe10;
         public const long ManualFocusRelease = 0xedb;  // bool
         public const long OverlayNativeInput = 0xedd;  // bool
+        public const long PlaceholderColor3 = 0xe80;  // Color3; heuristic decode, passed live check
         public const long ReturnKeyType = 0xeb0;  // Enums::ReturnKeyTypeEnum::ReturnKeyType
         public const long ShouldEmitReturnEvents = 0xedf;  // bool
         public const long ShouldEmitTabEvents = 0xee0;  // bool
         public const long ShouldEmitUpAndDownArrowEvents = 0xee1;  // bool
+        public const long TextColor3 = 0xe8c;  // Color3; heuristic decode, passed live check
         public const long TextInputType = 0xebc;  // Enums::TextInputTypeEnum::TextInputType
     }
     public static class TextChannel
@@ -3149,6 +3167,8 @@ namespace Offsets
         public const long Confidential = 0xea4;  // bool
         public const long LocalizationMatchIdentifier = 0xdf8;
         public const long LocalizationMatchedSourceText = 0xe10;
+        public const long TextColor3 = 0xe68;  // Color3; heuristic decode, passed live check
+        public const long TextStrokeColor3 = 0xe74;  // Color3; heuristic decode, passed live check
     }
     public static class TextSource
     {
@@ -3190,10 +3210,10 @@ namespace Offsets
     {
         public const long InertiaMigrated = 0x238;  // bool
         public const long PCDRequestId = 0x230;  // int
-        public const long UnscaledCofm = 0x20c;  // Vector3
-        public const long UnscaledVolInertiaDiags = 0x218;  // Vector3
-        public const long UnscaledVolInertiaOffDiags = 0x224;  // Vector3
-        public const long UnscaledVolume = 0x234;  // float
+    }
+    public static class UIAspectRatioConstraint
+    {
+        public const long AspectRatio = 0xa8;  // float; heuristic decode, passed live check
     }
     public static class UIDragDetector
     {
@@ -3217,6 +3237,11 @@ namespace Offsets
         public const long SelectionModeRotateSpeed = 0x198;  // float
         public const long UIDragSpeedAxisMapping = 0x19c;  // Enums::UIDragSpeedAxisMapping
     }
+    public static class UIGradient
+    {
+        public const long Rotation = 0x120;  // float; heuristic decode, passed live check
+        public const long Scale = 0x124;  // float; heuristic decode, passed live check
+    }
     public static class UIPageLayout
     {
         public const long Animated = 0x154;  // bool
@@ -3228,6 +3253,15 @@ namespace Offsets
         public const long ScrollWheelInputEnabled = 0x157;  // bool
         public const long TouchInputEnabled = 0x158;  // bool
         public const long TweenTime = 0x150;  // float
+    }
+    public static class UISizeConstraint
+    {
+        public const long MinSize = 0xb0;  // Vector2; heuristic decode, passed live check
+    }
+    public static class UIStroke
+    {
+        public const long Color = 0xa8;  // Color3; heuristic decode, passed live check
+        public const long Thickness = 0xcc;  // float; heuristic decode, passed live check
     }
     public static class UITableLayout
     {

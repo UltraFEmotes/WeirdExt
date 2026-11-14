@@ -137,11 +137,21 @@ def descriptor_owner(mach, constructor):
 
 
 def this_adjustment(mach, dispatch):
-    """The dispatch thunk's `add xD, x1, #imm`: offset of the class's property base."""
+    """Offset of the class's property base: the dispatch thunk's add/sub arithmetic on the
+    instance pointer (x1), followed through the register it lands in (e.g. sub then add)."""
+    register, total = None, None
     for word in _words(mach, dispatch, 48):
-        if (word & 0xFF8003E0) == 0x91000020:
-            return _immediate(word)
-    return 0
+        if (word & 0x7F800000) not in (0x11000000, 0x51000000) or not word >> 31:   # 64-bit ADD/SUB immediate
+            if total is not None and (word & 0xFFC00000) in (0xA9400000, 0xF9400000):   # first load: done
+                break
+            continue
+        source, destination = (word >> 5) & 31, word & 31
+        amount = _immediate(word) * (-1 if word & 0x40000000 else 1)
+        if source == 1 and total is None:
+            register, total = destination, amount
+        elif total is not None and source == register == destination:
+            total += amount
+    return total or 0
 
 
 def _object_loads(words):

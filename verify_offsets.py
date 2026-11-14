@@ -104,6 +104,9 @@ def _floats(reader, address, count):
 
 
 def _float_ok(value):
+    """Finite and sane, or infinite (Roblox uses math.huge for e.g. MaxDistance); never NaN."""
+    if math.isinf(value):
+        return True
     return math.isfinite(value) and abs(value) < WORLD_LIMIT and (value == 0 or abs(value) > 1e-6)
 
 
@@ -230,13 +233,21 @@ def identity(reader, profile):
     creator = fetch(f"https://games.roblox.com/v1/games?universeIds={universe}")["data"][0]["creator"]["id"]
     local = reader.pointer(reader.players + reader.spec.local_player)
     username = reader.name(local)
-    user = fetch("https://users.roblox.com/v1/usernames/users", {"usernames": [username]})["data"][0]["id"]
-    print(f"[verify] place {place}, universe {universe}, creator {creator}, job {job}, you {username} ({user})")
+    players = {reader.name(player): player for player in reader.children(reader.players, 128)
+               if reader.klass(player) == "RBX::Player"}
+    lookup = fetch("https://users.roblox.com/v1/usernames/users", {"usernames": list(players)})["data"]
+    ids = {row["requestedUsername"]: row["id"] for row in lookup}
+    user = ids[username]
+    print(f"[verify] place {place}, universe {universe}, creator {creator}, job {job}, you {username} ({user}); "
+          f"{len(ids)} players with known ids")
     found = {"DataModel.PlaceId": find_int64(reader, reader.root, place),
              "DataModel.GameId": find_int64(reader, reader.root, universe),
              "DataModel.CreatorId": find_int64(reader, reader.root, creator),
              "DataModel.JobId": find_string(reader, reader.root, job),
-             "Player.UserId": find_int64(reader, local, user)}
+             # Your id may sit in several slots; the real field holds every player's own id.
+             "Player.UserId": [offset for offset in find_int64(reader, local, user)
+                               if all(struct.unpack("<q", reader.mem.read(players[name] + offset, 8))[0] == user_id
+                                      for name, user_id in ids.items() if name in players)]}
     path = profile / "offsets.json"
     report = json.loads(path.read_text(encoding="utf-8"))
     for key, offsets in found.items():

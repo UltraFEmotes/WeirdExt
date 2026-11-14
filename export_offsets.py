@@ -94,8 +94,10 @@ def load_verification(profile_sha, directory):
     return report
 
 
-def verdict(verification, section, cls, name):
-    return verification[section].get(cls.replace("::", "_"), {}).get(name, {}).get("verdict")
+def verdict(verification, section, cls, name, entry):
+    """The live verdict, only if it was made at the offset this dump uses."""
+    result = verification[section].get(cls.replace("::", "_"), {}).get(name, {})
+    return result.get("verdict") if result.get("offset") == f"{entry['offset']:#x}" else None
 
 
 def reflected(curated, verification):
@@ -106,9 +108,9 @@ def reflected(curated, verification):
     result = reflect(MachO(str(CLIENT)))
     exact = result["exact"]
     dropped = [(cls, name) for cls, props in exact.items() for name in props
-               if verdict(verification, "exact", cls, name) == "fail"]
+               if verdict(verification, "exact", cls, name, props[name]) == "fail"]
     promoted = {(cls, name): entry for cls, props in result["heuristic"].items() for name, entry in props.items()
-                if verdict(verification, "heuristic", cls, name) == "pass"}
+                if verdict(verification, "heuristic", cls, name, entry) == "pass"}
     known = {(namespace, name): value for namespace, name, value in curated}
     for cls, name in CROSS_CHECKS:
         entry = exact.get(cls, {}).get(name)

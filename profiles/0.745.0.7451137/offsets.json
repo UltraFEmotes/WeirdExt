@@ -67,6 +67,26 @@
       "value": 8,
       "method": "live probe: camera smart pointer equal to the local Humanoid's own (self, control) pair",
       "confidence": 1.0
+    },
+    "DataModel.PlaceId": {
+      "value": 368,
+      "method": "verify_offsets.py: unique match for the live value (Roblox log / web API)",
+      "confidence": 1.0
+    },
+    "DataModel.GameId": {
+      "value": 360,
+      "method": "verify_offsets.py: unique match for the live value (Roblox log / web API)",
+      "confidence": 1.0
+    },
+    "DataModel.CreatorId": {
+      "value": 352,
+      "method": "verify_offsets.py: unique match for the live value (Roblox log / web API)",
+      "confidence": 1.0
+    },
+    "DataModel.JobId": {
+      "value": 264,
+      "method": "verify_offsets.py: unique match for the live value (Roblox log / web API)",
+      "confidence": 1.0
     }
   },
   "evidence": {

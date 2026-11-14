@@ -3,8 +3,8 @@
 //
 // Roblox Version  : 0.745.0.7451137
 // Binary SHA-256  : 8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7
-// Dumped At       : 2026-11-14 21:05 UTC
-// Total Offsets   : 2318 (29 confirmed live, 2289 from reflection)
+// Dumped At       : 2026-11-14 21:08 UTC
+// Total Offsets   : 2334 (33 confirmed live, 2301 from reflection)
 //
 // macOS layouts differ from Windows; use these with the macOS client only.
 
@@ -45,7 +45,6 @@ namespace Offsets {
         inline constexpr uintptr_t CanLoadCharacterAppearance = 0x383;  // bool
         inline constexpr uintptr_t CharacterAppearance = 0xc0;
         inline constexpr uintptr_t CharacterAppearanceId = 0x2c0;  // int64
-        inline constexpr uintptr_t ChararacterRegionId = 0x308;  // Vector3
         inline constexpr uintptr_t ChatAvailabilityStatus = 0xd8;
         inline constexpr uintptr_t ChatPrivacyMode = 0x334;  // Enums::ChatPrivacyModeEnum::ChatPrivacyMode
         inline constexpr uintptr_t CloudEditCameraCoordinateFrame = 0x2d8;  // CoordinateFrame
@@ -128,7 +127,6 @@ namespace Offsets {
         inline constexpr uintptr_t StreamingTargetRadius = 0x51c;  // int
         inline constexpr uintptr_t ThrottleLevel = 0x520;  // int
         inline constexpr uintptr_t TouchEventsUseCollisionGroups = 0x524;  // Enums::RolloutState
-        inline constexpr uintptr_t TouchesUseCollisionGroups = 0x3b8;  // bool
         inline constexpr uintptr_t UseInputSink = 0x52c;  // Enums::RolloutState
         inline constexpr uintptr_t UseNewLuauTypeSolver = 0x530;  // Enums::RolloutState
         inline constexpr uintptr_t ValidateEnabledProximityPrompt = 0x534;  // Enums::RolloutState
@@ -164,9 +162,12 @@ namespace Offsets {
         inline constexpr uintptr_t Massless = 0x11a;  // bool
         inline constexpr uintptr_t Material = 0x24e;  // MaterialType; at *(object + 0x168) + this
         inline constexpr uintptr_t NetworkOwnershipRule = 0x26a;  // NetworkOwnership; at *(object + 0x168) + this
+        inline constexpr uintptr_t Position = 0xa8;  // Vector3; heuristic decode, passed live check
         inline constexpr uintptr_t Reflectance = 0xec;  // float
+        inline constexpr uintptr_t RotVelocity = 0xa8;  // Vector3; heuristic decode, passed live check
         inline constexpr uintptr_t Size = 0x1c4;  // Vector3; at *(object + 0x168) + this
         inline constexpr uintptr_t Transparency = 0x110;  // float
+        inline constexpr uintptr_t Velocity = 0xa8;  // Vector3; heuristic decode, passed live check
         inline constexpr uintptr_t size = 0x1c4;  // Vector3; at *(object + 0x168) + this
     }
     namespace Primitive {
@@ -174,6 +175,13 @@ namespace Offsets {
         inline constexpr uintptr_t Position = 0xd4;
         inline constexpr uintptr_t Flags = 0x1be;
         inline constexpr uintptr_t AssemblyLinearVelocity = 0xe0;  // copy refreshed from the solver body each physics step
+    }
+    namespace DataModel {
+        inline constexpr uintptr_t PlaceId = 0x170;  // int64
+        inline constexpr uintptr_t GameId = 0x168;  // int64 (universe id)
+        inline constexpr uintptr_t CreatorId = 0x160;  // int64
+        inline constexpr uintptr_t JobId = 0x108;  // std::string
+        inline constexpr uintptr_t ForceR15 = 0x190;  // bool
     }
     namespace Humanoid {
         inline constexpr uintptr_t Health = 0x174;
@@ -396,10 +404,14 @@ namespace Offsets {
     }
     namespace Attachment {
         inline constexpr uintptr_t Axis = 0xa0;  // Vector3
-        inline constexpr uintptr_t CFrame = 0xa0;  // CoordinateFrame
+        inline constexpr uintptr_t Orientation = 0xa8;  // Vector3; heuristic decode, passed live check
         inline constexpr uintptr_t Position = 0xac;  // Vector3
+        inline constexpr uintptr_t Rotation = 0xa8;  // Vector3; heuristic decode, passed live check
         inline constexpr uintptr_t SecondaryAxis = 0xb8;  // Vector3
         inline constexpr uintptr_t Visible = 0xc4;  // bool
+        inline constexpr uintptr_t WorldAxis = 0xa0;  // Vector3; heuristic decode, passed live check
+        inline constexpr uintptr_t WorldPosition = 0xb4;  // Vector3; heuristic decode, passed live check
+        inline constexpr uintptr_t WorldSecondaryAxis = 0xb8;  // Vector3; heuristic decode, passed live check
     }
     namespace AudioSearchParams {
         inline constexpr uintptr_t Album = 0xa0;
@@ -672,7 +684,6 @@ namespace Offsets {
         inline constexpr uintptr_t ExtentsOffset = 0x6c8;  // Vector3
         inline constexpr uintptr_t ExtentsOffsetWorldSpace = 0x6d4;  // Vector3
         inline constexpr uintptr_t LightInfluence = 0x714;  // float
-        inline constexpr uintptr_t MaxDistance = 0x718;  // float
         inline constexpr uintptr_t Size = 0x6b8;  // UDim2
         inline constexpr uintptr_t SizeOffset = 0x6f8;  // Vector2
         inline constexpr uintptr_t StudsOffset = 0x6e0;  // Vector3
@@ -785,6 +796,8 @@ namespace Offsets {
         inline constexpr uintptr_t CFrame = 0xb8;  // CoordinateFrame
     }
     namespace CanvasGroup {
+        inline constexpr uintptr_t GroupColor3 = 0x99c;  // Color3; heuristic decode, passed live check
+        inline constexpr uintptr_t GroupTransparency = 0x9a8;  // float; heuristic decode, passed live check
         inline constexpr uintptr_t ResolutionScale = 0x9ac;  // float
     }
     namespace CapturesViewConfiguration {
@@ -1089,15 +1102,15 @@ namespace Offsets {
         inline constexpr uintptr_t MoveSpeedFactor = 0xa0;  // float
     }
     namespace ControllerManager {
-        inline constexpr uintptr_t ActiveController = 0x8;
-        inline constexpr uintptr_t BaseMoveSpeed = 0x6c;  // float
-        inline constexpr uintptr_t BaseTurnSpeed = 0x70;  // float
-        inline constexpr uintptr_t ClimbSensor = 0x18;
-        inline constexpr uintptr_t FacingDirection = 0x48;  // Vector3
-        inline constexpr uintptr_t GroundSensor = 0x28;
-        inline constexpr uintptr_t MovingDirection = 0x54;  // Vector3
-        inline constexpr uintptr_t RootPart = 0x38;
-        inline constexpr uintptr_t UpDirection = 0x60;  // Vector3
+        inline constexpr uintptr_t ActiveController = 0xa0;
+        inline constexpr uintptr_t BaseMoveSpeed = 0x104;  // float
+        inline constexpr uintptr_t BaseTurnSpeed = 0x108;  // float
+        inline constexpr uintptr_t ClimbSensor = 0xb0;
+        inline constexpr uintptr_t FacingDirection = 0xe0;  // Vector3
+        inline constexpr uintptr_t GroundSensor = 0xc0;
+        inline constexpr uintptr_t MovingDirection = 0xec;  // Vector3
+        inline constexpr uintptr_t RootPart = 0xd0;
+        inline constexpr uintptr_t UpDirection = 0xf8;  // Vector3
     }
     namespace ControllerPartSensor {
         inline constexpr uintptr_t LadderSearchHeight = 0x27c;  // float
@@ -1158,9 +1171,6 @@ namespace Offsets {
         inline constexpr uintptr_t InnerRadius = 0x194;  // float
         inline constexpr uintptr_t Radius = 0x198;  // float
         inline constexpr uintptr_t Shading = 0x19c;  // Enums::AdornShading
-    }
-    namespace DataModel {
-        inline constexpr uintptr_t ForceR15 = 0xa8;  // bool
     }
     namespace DataModelMesh {
         inline constexpr uintptr_t Offset = 0xa0;  // Vector3
@@ -1502,6 +1512,9 @@ namespace Offsets {
         inline constexpr uintptr_t MouseButton2UpConnectionCount = 0x9e4;  // int
         inline constexpr uintptr_t Selected = 0x9ee;  // bool
     }
+    namespace GuiImageButton {
+        inline constexpr uintptr_t ImageColor3 = 0xd98;  // Color3; heuristic decode, passed live check
+    }
     namespace GuiLayerCollector {
         inline constexpr uintptr_t Enabled = 0x494;  // bool
         inline constexpr uintptr_t ResetOnSpawn = 0x495;  // bool
@@ -1509,6 +1522,8 @@ namespace Offsets {
         inline constexpr uintptr_t ZIndexBehavior = 0x490;  // Enums::ZIndexBehaviorEnum::ZIndexBehavior
     }
     namespace GuiObject {
+        inline constexpr uintptr_t BackgroundColor3 = 0x510;  // Color3; heuristic decode, passed live check
+        inline constexpr uintptr_t BorderColor3 = 0x51c;  // Color3; heuristic decode, passed live check
         inline constexpr uintptr_t DragBeginConnectionCount = 0x540;  // int
         inline constexpr uintptr_t DragStoppedConnectionCount = 0x544;  // int
         inline constexpr uintptr_t Draggable = 0x57a;  // bool
@@ -1728,6 +1743,9 @@ namespace Offsets {
         inline constexpr uintptr_t DoubleSided = 0x1c0;  // bool
         inline constexpr uintptr_t Size = 0x1b8;  // Vector2
     }
+    namespace ImageLabel {
+        inline constexpr uintptr_t ImageColor3 = 0xac0;  // Color3; heuristic decode, passed live check
+    }
     namespace IncrementalPatchBuilder {
         inline constexpr uintptr_t AddPathsToBundle = 0xb0;  // bool
         inline constexpr uintptr_t BuildDebouncePeriod = 0x170;  // double
@@ -1804,6 +1822,7 @@ namespace Offsets {
     namespace Lighting {
         inline constexpr uintptr_t Ambient = 0xb8;  // Color3
         inline constexpr uintptr_t Brightness = 0x100;  // float
+        inline constexpr uintptr_t ClockTime = 0xb0;  // float; heuristic decode, passed live check
         inline constexpr uintptr_t ColorShift_Bottom = 0xc4;  // Color3
         inline constexpr uintptr_t ColorShift_Top = 0xd0;  // Color3
         inline constexpr uintptr_t EnvironmentDiffuseScale = 0x104;  // float
@@ -1831,7 +1850,6 @@ namespace Offsets {
         inline constexpr uintptr_t ForcePlayModeRobloxLocaleId = 0xc8;
         inline constexpr uintptr_t GameSourceLanguageId = 0xe0;
         inline constexpr uintptr_t IsImageCaptureEnabled = 0x108;  // bool
-        inline constexpr uintptr_t IsTextScraperRunning = 0x240;  // bool
         inline constexpr uintptr_t RobloxForcePlayModeGameLocaleId = 0xb0;
         inline constexpr uintptr_t RobloxForcePlayModeRobloxLocaleId = 0xc8;
         inline constexpr uintptr_t ShouldUseCloudTable = 0x109;  // bool
@@ -1903,7 +1921,6 @@ namespace Offsets {
         inline constexpr uintptr_t DoubleSided = 0x33c;  // bool
         inline constexpr uintptr_t HasJointOffset = 0x33d;  // bool
         inline constexpr uintptr_t HasSkinnedMesh = 0x33e;  // bool
-        inline constexpr uintptr_t InitialSize = 0x400;  // Vector3
         inline constexpr uintptr_t JointOffset = 0x328;  // Vector3
         inline constexpr uintptr_t MeshContent = 0x2d0;  // Content
         inline constexpr uintptr_t RenderFidelity = 0x334;  // RenderFidelity
@@ -1934,7 +1951,6 @@ namespace Offsets {
     }
     namespace Motor6D {
         inline constexpr uintptr_t EnableSkinning = 0x198;  // bool
-        inline constexpr uintptr_t Transform = 0x168;  // CoordinateFrame
     }
     namespace NegateOperation {
         inline constexpr uintptr_t PreviousOperation = 0x3c0;  // NegateOperationHiddenHistory
@@ -1974,7 +1990,6 @@ namespace Offsets {
         inline constexpr uintptr_t ChildData2 = 0x348;  // SharedString
         inline constexpr uintptr_t ComponentIndex = 0x360;  // int
         inline constexpr uintptr_t DCDPropertyData = 0x310;  // CSGPropertyData
-        inline constexpr uintptr_t InitialSize = 0x400;  // Vector3
         inline constexpr uintptr_t MeshData = 0x328;  // BinaryString
         inline constexpr uintptr_t MeshData2 = 0x358;  // SharedString
         inline constexpr uintptr_t OffCentered = 0x374;  // bool
@@ -2230,6 +2245,7 @@ namespace Offsets {
     }
     namespace ScrollingFrame {
         inline constexpr uintptr_t CanvasPosition = 0xa64;  // Vector2
+        inline constexpr uintptr_t ScrollBarImageColor3 = 0xa50;  // Color3; heuristic decode, passed live check
         inline constexpr uintptr_t ScrollRate = 0xa94;  // float
         inline constexpr uintptr_t SmoothScroll = 0xaa5;  // bool
     }
@@ -2541,8 +2557,6 @@ namespace Offsets {
         inline constexpr uintptr_t RollOffMaxDistance = 0x100;  // float
         inline constexpr uintptr_t RollOffMinDistance = 0x104;  // float
         inline constexpr uintptr_t RollOffMode = 0x108;
-        inline constexpr uintptr_t TimePosition = 0x1f0;  // double
-        inline constexpr uintptr_t TimePositionReplicator = 0x1f0;  // double
         inline constexpr uintptr_t UsageContextPermission = 0x10c;  // UsageContext
         inline constexpr uintptr_t Volume = 0x110;  // float
         inline constexpr uintptr_t xmlRead_MaxDistance_3 = 0x100;  // float
@@ -2761,10 +2775,12 @@ namespace Offsets {
         inline constexpr uintptr_t LocalizationMatchedSourceText = 0xe10;
         inline constexpr uintptr_t ManualFocusRelease = 0xedb;  // bool
         inline constexpr uintptr_t OverlayNativeInput = 0xedd;  // bool
+        inline constexpr uintptr_t PlaceholderColor3 = 0xe80;  // Color3; heuristic decode, passed live check
         inline constexpr uintptr_t ReturnKeyType = 0xeb0;  // Enums::ReturnKeyTypeEnum::ReturnKeyType
         inline constexpr uintptr_t ShouldEmitReturnEvents = 0xedf;  // bool
         inline constexpr uintptr_t ShouldEmitTabEvents = 0xee0;  // bool
         inline constexpr uintptr_t ShouldEmitUpAndDownArrowEvents = 0xee1;  // bool
+        inline constexpr uintptr_t TextColor3 = 0xe8c;  // Color3; heuristic decode, passed live check
         inline constexpr uintptr_t TextInputType = 0xebc;  // Enums::TextInputTypeEnum::TextInputType
     }
     namespace TextChannel {
@@ -2821,6 +2837,8 @@ namespace Offsets {
         inline constexpr uintptr_t Confidential = 0xea4;  // bool
         inline constexpr uintptr_t LocalizationMatchIdentifier = 0xdf8;
         inline constexpr uintptr_t LocalizationMatchedSourceText = 0xe10;
+        inline constexpr uintptr_t TextColor3 = 0xe68;  // Color3; heuristic decode, passed live check
+        inline constexpr uintptr_t TextStrokeColor3 = 0xe74;  // Color3; heuristic decode, passed live check
     }
     namespace TextSource {
         inline constexpr uintptr_t CanSend = 0xd0;  // bool
@@ -2858,10 +2876,9 @@ namespace Offsets {
     namespace TriangleMeshPart {
         inline constexpr uintptr_t InertiaMigrated = 0x238;  // bool
         inline constexpr uintptr_t PCDRequestId = 0x230;  // int
-        inline constexpr uintptr_t UnscaledCofm = 0x20c;  // Vector3
-        inline constexpr uintptr_t UnscaledVolInertiaDiags = 0x218;  // Vector3
-        inline constexpr uintptr_t UnscaledVolInertiaOffDiags = 0x224;  // Vector3
-        inline constexpr uintptr_t UnscaledVolume = 0x234;  // float
+    }
+    namespace UIAspectRatioConstraint {
+        inline constexpr uintptr_t AspectRatio = 0xa8;  // float; heuristic decode, passed live check
     }
     namespace UIDragDetector {
         inline constexpr uintptr_t BoundingBehavior = 0x178;  // UIDragDetectorBoundingBehavior
@@ -2884,6 +2901,10 @@ namespace Offsets {
         inline constexpr uintptr_t SelectionModeRotateSpeed = 0x198;  // float
         inline constexpr uintptr_t UIDragSpeedAxisMapping = 0x19c;  // Enums::UIDragSpeedAxisMapping
     }
+    namespace UIGradient {
+        inline constexpr uintptr_t Rotation = 0x120;  // float; heuristic decode, passed live check
+        inline constexpr uintptr_t Scale = 0x124;  // float; heuristic decode, passed live check
+    }
     namespace UIPageLayout {
         inline constexpr uintptr_t Animated = 0x154;  // bool
         inline constexpr uintptr_t Circular = 0x155;  // bool
@@ -2894,6 +2915,13 @@ namespace Offsets {
         inline constexpr uintptr_t ScrollWheelInputEnabled = 0x157;  // bool
         inline constexpr uintptr_t TouchInputEnabled = 0x158;  // bool
         inline constexpr uintptr_t TweenTime = 0x150;  // float
+    }
+    namespace UISizeConstraint {
+        inline constexpr uintptr_t MinSize = 0xb0;  // Vector2; heuristic decode, passed live check
+    }
+    namespace UIStroke {
+        inline constexpr uintptr_t Color = 0xa8;  // Color3; heuristic decode, passed live check
+        inline constexpr uintptr_t Thickness = 0xcc;  // float; heuristic decode, passed live check
     }
     namespace UITableLayout {
         inline constexpr uintptr_t FillEmptySpaceColumns = 0x14c;  // bool
