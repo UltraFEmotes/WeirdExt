@@ -21,6 +21,7 @@
 !/third_party/
 !/dumps/
 !/export_offsets.py
+!/verify_offsets.py
 
 /rbxl/*
 !/rbxl/*.py

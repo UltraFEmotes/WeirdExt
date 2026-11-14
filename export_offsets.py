@@ -44,6 +44,11 @@ RESOLVED = (
     ("BasePart.Primitive", "BasePart", "Primitive"),
     ("Primitive.CFrame", "Primitive", "Rotation"),
     ("Primitive.Position", "Primitive", "Position"),
+    ("DataModel.PlaceId", "DataModel", "PlaceId"),
+    ("DataModel.GameId", "DataModel", "GameId"),
+    ("DataModel.CreatorId", "DataModel", "CreatorId"),
+    ("DataModel.JobId", "DataModel", "JobId"),
+    ("Player.UserId", "Player", "UserId"),
     ("Humanoid.Health", "Humanoid", "Health"),
     ("Humanoid.MaxHealth", "Humanoid", "MaxHealth"),
 )
@@ -55,6 +60,11 @@ NOTES = {
     ("Camera", "Rotation"): "nine floats, row-major; Position follows at +36",
     ("Camera", "FieldOfView"): "float, radians (vertical)",
     ("Camera", "CameraSubject"): "(object, control block) smart pointer pair",
+    ("DataModel", "PlaceId"): "int64",
+    ("DataModel", "GameId"): "int64 (universe id)",
+    ("DataModel", "CreatorId"): "int64",
+    ("DataModel", "JobId"): "std::string",
+    ("Player", "UserId"): "int64",
     ("Primitive", "Rotation"): "nine floats, row-major; Position follows at +36",
     ("Primitive", "AssemblyLinearVelocity"): "copy refreshed from the solver body each physics step",
     ("PrimitiveFlags", "CanCollide"): "bit mask in Primitive::Flags (a byte)",
@@ -73,28 +83,53 @@ CROSS_CHECKS = (("Humanoid", "Health"), ("Humanoid", "MaxHealth"), ("Humanoid", 
                 ("Workspace", "CurrentCamera"), ("Instance", "Parent"), ("Instance", "Name"))
 
 
-def reflected(curated):
-    """Exact reflected properties as (namespace, name, value, note, type), checked against curated values."""
+def load_verification(profile_sha, directory):
+    """verify_offsets.py results for this exact binary, or an empty result."""
+    path = directory / "verification.json"
+    if not path.exists():
+        return {"exact": {}, "heuristic": {}}
+    report = json.loads(path.read_text(encoding="utf-8"))
+    if report.get("binary_sha256") != profile_sha:
+        raise RuntimeError(f"{path} was made for a different client; rerun verify_offsets.py")
+    return report
+
+
+def verdict(verification, section, cls, name):
+    return verification[section].get(cls.replace("::", "_"), {}).get(name, {}).get("verdict")
+
+
+def reflected(curated, verification):
+    """Reflected properties as (namespace, name, value, note, type), checked against curated values.
+
+    Exact decodes are kept unless the live check failed them; heuristic decodes are
+    included only when the live check passed them."""
     result = reflect(MachO(str(CLIENT)))
     exact = result["exact"]
+    dropped = [(cls, name) for cls, props in exact.items() for name in props
+               if verdict(verification, "exact", cls, name) == "fail"]
+    promoted = {(cls, name): entry for cls, props in result["heuristic"].items() for name, entry in props.items()
+                if verdict(verification, "heuristic", cls, name) == "pass"}
     known = {(namespace, name): value for namespace, name, value in curated}
     for cls, name in CROSS_CHECKS:
         entry = exact.get(cls, {}).get(name)
         if entry is None or entry["offset"] != known.get((cls, name)):
             raise RuntimeError(f"reflection disagrees with the confirmed {cls}.{name} "
                                f"({entry and hex(entry['offset'])} vs {hex(known.get((cls, name), 0))}); not exporting")
+    rows = {(cls, name): (entry, None) for cls, props in exact.items() for name, entry in props.items()
+            if (cls, name) not in dropped}
+    rows.update({key: (entry, "heuristic decode, passed live check") for key, entry in promoted.items()})
     entries = []
-    for cls in sorted(exact):
+    for cls, name in sorted(rows):
+        entry, note = rows[(cls, name)]
         namespace = cls.replace("::", "_")
-        for name in sorted(exact[cls]):
-            entry = exact[cls][name]
-            if (namespace, name) in known:
-                continue
-            if "then" in entry:
-                entries.append((namespace, name, entry["then"], f"at *(object + {entry['offset']:#x}) + this",
-                                entry["type"]))
-            else:
-                entries.append((namespace, name, entry["offset"], None, entry["type"]))
+        if (namespace, name) in known:
+            continue
+        if "then" in entry:
+            note = "; ".join(filter(None, (f"at *(object + {entry['offset']:#x}) + this", note)))
+            entries.append((namespace, name, entry["then"], note, entry["type"]))
+        else:
+            entries.append((namespace, name, entry["offset"], note, entry["type"]))
+    result["dropped"], result["promoted"] = dropped, list(promoted)
     return entries, result
 
 
@@ -120,7 +155,11 @@ def collect(profile: Path):
         if len(positions) > 1:
             entries.append(("SolverBody", "BlockStride", positions[1] - positions[0]))
     curated = list(entries)
-    reflected_entries, reflection = reflected([(namespace, name, value) for namespace, name, value in curated])
+    version = offsets.get("version") or profile.name
+    verification = load_verification(offsets["evidence"]["static_geometry_accessors"]["binary_sha256"],
+                                      DUMPS / version)
+    reflected_entries, reflection = reflected([(namespace, name, value) for namespace, name, value in curated],
+                                              verification)
     entries = [(namespace, name, value, NOTES.get((namespace, name)), None) for namespace, name, value in curated]
     entries += reflected_entries
     meta = {
@@ -132,9 +171,12 @@ def collect(profile: Path):
         "total": len(entries),
         "confirmed_live": len(curated),
         "reflected": len(reflected_entries),
+        "dropped_by_live_check": len(reflection["dropped"]),
+        "promoted_by_live_check": len(reflection["promoted"]),
     }
+    promoted = set(reflection["promoted"])
     unverified = {cls.replace("::", "_"): {name: {"offset": f"{entry['offset']:#x}", "type": entry["type"]}
-                                          for name, entry in sorted(props.items())}
+                                          for name, entry in sorted(props.items()) if (cls, name) not in promoted}
                   for cls, props in sorted(reflection["heuristic"].items())}
     return meta, entries, unverified
 
@@ -198,6 +240,8 @@ def main(argv=None):
                                                          "before use"}, "offsets": unverified})
     print(f"[export] {meta['total']} offsets ({meta['confirmed_live']} confirmed live, {meta['reflected']} reflected) "
           f"in {len(groups)} namespaces for {meta['roblox_version']} -> {directory.relative_to(ROOT)}/")
+    print(f"[export] live check: {meta['dropped_by_live_check']} reflected offsets dropped, "
+          f"{meta['promoted_by_live_check']} heuristic ones promoted")
     print(f"[export] {sum(map(len, unverified.values()))} heuristic decodes -> unverified.json")
     return 0
 

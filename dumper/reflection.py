@@ -70,18 +70,22 @@ def _type_name(mangled):
     return None, mangled
 
 
+KINDS = {DESCRIPTORS[0]: "value", DESCRIPTORS[1]: "reference", DESCRIPTORS[2]: "enum"}
+
+
 def descriptor_types(mangled):
-    """(class, value type) from a PropDescriptor-family RTTI name."""
+    """(class, value type, kind) from a PropDescriptor-family RTTI name."""
     for prefix in DESCRIPTORS:
         if mangled.startswith(prefix):
             cls, rest = _type_name(mangled[len(prefix):])
             value, _ = _type_name(rest) if rest else (None, None)
-            if prefix != DESCRIPTORS[0] and prefix.endswith("RefPropDescriptorI"):
+            kind = KINDS[prefix]
+            if kind == "reference":
                 value = "Instance"
             elif value and "basic_string" in value:
                 value = "string"
-            return cls, value
-    return None, None
+            return cls, value, kind
+    return None, None, None
 
 
 def _cstring(mach, address):
@@ -209,7 +213,7 @@ def reflect(mach):
             continue
         counts["registrations"] += 1
         name = _cstring(mach, name_address)
-        cls, value_type = descriptor_types(owner[1])
+        cls, value_type, kind = descriptor_types(owner[1])
         decoded = decode_getter(mach, getter)
         if not name or not cls or decoded is None:
             counts["unresolved"] += 1
@@ -217,7 +221,7 @@ def reflect(mach):
         if decoded["how"] == "global":
             counts["global"] += 1
             continue
-        entry = {"type": value_type, "offset": this_adjustment(mach, owner[2]) + decoded["offset"],
+        entry = {"type": value_type, "kind": kind, "offset": this_adjustment(mach, owner[2]) + decoded["offset"],
                  "how": decoded["how"]}
         if "then" in decoded:
             entry["then"] = decoded["then"]

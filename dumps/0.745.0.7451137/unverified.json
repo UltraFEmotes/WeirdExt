@@ -3,11 +3,13 @@
     "platform": "macOS ARM64 (Apple Silicon)",
     "roblox_version": "0.745.0.7451137",
     "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
-    "dumped_at": "2026-11-14 21:02 UTC",
+    "dumped_at": "2026-11-14 21:05 UTC",
     "dumper": "WeirdExt export_offsets.py",
     "total": 2318,
     "confirmed_live": 29,
     "reflected": 2289,
+    "dropped_by_live_check": 0,
+    "promoted_by_live_check": 0,
     "note": "heuristic getter decodes; confirm live before use"
   },
   "offsets": {

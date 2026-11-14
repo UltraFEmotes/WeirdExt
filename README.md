@@ -522,7 +522,24 @@ version, binary SHA-256 and dump time in the header. Two sources are merged:
   values on the Primitive) are commented `at *(object + X) + this`.
 
 Getters that only decode heuristically go to `unverified.json` instead of the
-headers; confirm them live before relying on them. These are **macOS ARM64** values: struct
+headers; confirm them live before relying on them.
+
+**Live check (recommended before publishing).** In any game:
+
+```sh
+sudo "$PWD/.venv/bin/python" "$PWD/verify_offsets.py"
+.venv/bin/python export_offsets.py
+```
+
+`verify_offsets.py` samples real instances of each class (and subclasses, via
+RTTI), reads every property where the dump says it is, and fails values that
+cannot be that type (bools not 0/1, non-finite floats, references that are not
+Instances, unreadable strings, CFrames that are not rotations). The export then
+drops reflected offsets that failed and promotes heuristic ones that passed. It
+also finds `DataModel` PlaceId / JobId (from Roblox's own log), GameId /
+CreatorId (Roblox web API for that place) and `Player` UserId (web API for your
+username) by searching for those exact values. Plausibility is evidence, not
+proof: a wrong offset can still hold a plausible value. It only reads. These are **macOS ARM64** values: struct
 layouts differ from the Windows client. The `SolverBody` namespace has no
 Windows equivalent: it is the physics body that actually moves a part (its
 `AssemblyLinearVelocity` in `Primitive` is a copy refreshed every step).

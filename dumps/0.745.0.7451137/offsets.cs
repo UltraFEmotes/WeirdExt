@@ -2,7 +2,7 @@
 //
 // Roblox Version  : 0.745.0.7451137
 // Binary SHA-256  : 8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7
-// Dumped At       : 2026-11-14 21:02 UTC
+// Dumped At       : 2026-11-14 21:05 UTC
 // Total Offsets   : 2318 (29 confirmed live, 2289 from reflection)
 //
 // macOS layouts differ from Windows; use these with the macOS client only.
