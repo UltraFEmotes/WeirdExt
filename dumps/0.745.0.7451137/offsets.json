@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "platform": "macOS ARM64 (Apple Silicon)",
+    "roblox_version": "0.745.0.7451137",
+    "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
+    "dumped_at": "2026-11-14 20:54 UTC",
+    "dumper": "WeirdExt export_offsets.py",
+    "total": 29
+  },
+  "offsets": {
+    "Instance": {
+      "Name": "0x68",
+      "Parent": "0x60",
+      "ChildrenStart": "0x70",
+      "ChildrenEnd": "0x8",
+      "This": "0x8"
+    },
+    "Players": {
+      "LocalPlayer": "0x108"
+    },
+    "Player": {
+      "ModelInstance": "0x258",
+      "Team": "0x298"
+    },
+    "Workspace": {
+      "CurrentCamera": "0x458"
+    },
+    "Camera": {
+      "Rotation": "0xb8",
+      "Position": "0xdc",
+      "FieldOfView": "0x120",
+      "CameraSubject": "0xa8"
+    },
+    "BasePart": {
+      "Primitive": "0x168"
+    },
+    "Primitive": {
+      "Rotation": "0xb0",
+      "Position": "0xd4",
+      "Flags": "0x1be",
+      "AssemblyLinearVelocity": "0xe0"
+    },
+    "Humanoid": {
+      "Health": "0x174",
+      "MaxHealth": "0x18c",
+      "WalkSpeed": "0x1b4",
+      "WalkSpeedCheck": "0x38c",
+      "JumpPower": "0x188",
+      "UseJumpPower": "0x1c6"
+    },
+    "PrimitiveFlags": {
+      "CanCollide": "0x8"
+    },
+    "SolverBody": {
+      "Pointer": "0x140",
+      "Position": "0x98",
+      "Velocity": "0xa4",
+      "BlockStride": "0x48"
+    }
+  }
+}

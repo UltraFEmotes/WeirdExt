@@ -498,6 +498,25 @@ The lower-level tools remain for inspection: `inspect_*_accessors.py` (offline,
 Leave write features off while validating a new build. Local reports can contain
 process addresses and memory-derived samples; do not publish them wholesale.
 
+## Public offset dumps
+
+`export_offsets.py` turns the profile matching your installed client into a
+shareable dump, without opening Roblox:
+
+```sh
+.venv/bin/python export_offsets.py
+```
+
+It writes `dumps/<version>/offsets.hpp`, `offsets.cs` and `offsets.json`,
+grouped as `Namespace::Name` like common Windows dumps, with the client
+version, binary SHA-256 and dump time in the header. Only offsets the profile
+holds evidence for are exported. These are **macOS ARM64** values: struct
+layouts differ from the Windows client. The `SolverBody` namespace has no
+Windows equivalent: it is the physics body that actually moves a part (its
+`AssemblyLinearVelocity` in `Primitive` is a copy refreshed every step).
+
+After a Roblox update: `update_profile.py`, the probes, then `export_offsets.py`.
+
 ## Troubleshooting
 
 ### `task_for_pid(...) failed`

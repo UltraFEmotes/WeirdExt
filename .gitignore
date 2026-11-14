@@ -19,6 +19,8 @@
 !/dumper/
 !/profiles/
 !/third_party/
+!/dumps/
+!/export_offsets.py
 
 /rbxl/*
 !/rbxl/*.py

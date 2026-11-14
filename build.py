@@ -33,7 +33,7 @@ def main(argv=None):
             raise RuntimeError("install Xcode Command Line Tools with: xcode-select --install")
 
         scripts = [ROOT / name for name in (
-            "main.py", "build.py", "dump_offsets.py", "update_profile.py", "probe_offsets.py",
+            "main.py", "build.py", "dump_offsets.py", "update_profile.py", "export_offsets.py", "probe_offsets.py",
             "probe_jump_velocity.py", "inspect_camera_accessors.py", "inspect_geometry_accessors.py",
             "inspect_movement_accessors.py", "inspect_physics_accessors.py")]
         scripts += list((ROOT / "dumper").glob("*.py"))
