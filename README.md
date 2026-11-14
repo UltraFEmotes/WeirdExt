@@ -45,7 +45,6 @@ memory readback is not proof that a gameplay feature works in the live engine.
 | Noclip | Opt-in, experimental; direct character parts only |
 | Mouse / Camera aim methods | Implemented, experimental; hold right mouse while Roblox is focused |
 | **Infinite Jump** | **Currently broken in reported live use. Included for development, not advertised as working.** |
-| Infinite Yield / script execution | Not included |
 
 Movement, physics, FOV writes and aim start disabled. Settings are currently
 in-memory only: restarting the process returns them to defaults.
@@ -326,7 +325,6 @@ snapshot. Expanding a node does not start continuous full-tree refreshes.
 Snapshots are capped at 2,000 nodes, depth 8, 64 children per node and a four-second
 budget. Large trees can be truncated. Snapshot construction can briefly reduce
 sampling performance. Refresh after a rejoin to inspect the new game's tree.
-Explorer does not execute scripts or provide Infinite Yield.
 
 ## Terminal commands
 
