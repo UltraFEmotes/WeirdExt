@@ -2,8 +2,8 @@
 //
 // Roblox Version  : 0.745.0.7451137
 // Binary SHA-256  : 8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7
-// Dumped At       : 2026-11-14 21:08 UTC
-// Total Offsets   : 2334 (33 confirmed live, 2301 from reflection)
+// Dumped At       : 2026-11-14 21:10 UTC
+// Total Offsets   : 2335 (34 confirmed live, 2301 from reflection)
 //
 // macOS layouts differ from Windows; use these with the macOS client only.
 
@@ -34,6 +34,7 @@ namespace Offsets
     {
         public const long ModelInstance = 0x258;
         public const long Team = 0x298;
+        public const long UserId = 0xb8;  // int64; a second copy sits at 0x2d0
         public const long AccountAgeReplicate = 0x31c;  // int
         public const long AgeChecked = 0x320;  // Enums::AgeCheckStatus
         public const long AutoJumpEnabled = 0x381;  // bool
@@ -432,13 +433,9 @@ namespace Offsets
     public static class Attachment
     {
         public const long Axis = 0xa0;  // Vector3
-        public const long Orientation = 0xa8;  // Vector3; heuristic decode, passed live check
-        public const long Position = 0xac;  // Vector3
-        public const long Rotation = 0xa8;  // Vector3; heuristic decode, passed live check
         public const long SecondaryAxis = 0xb8;  // Vector3
         public const long Visible = 0xc4;  // bool
         public const long WorldAxis = 0xa0;  // Vector3; heuristic decode, passed live check
-        public const long WorldPosition = 0xb4;  // Vector3; heuristic decode, passed live check
         public const long WorldSecondaryAxis = 0xb8;  // Vector3; heuristic decode, passed live check
     }
     public static class AudioSearchParams
@@ -730,6 +727,7 @@ namespace Offsets
         public const long ExtentsOffset = 0x6c8;  // Vector3
         public const long ExtentsOffsetWorldSpace = 0x6d4;  // Vector3
         public const long LightInfluence = 0x714;  // float
+        public const long MaxDistance = 0x718;  // float
         public const long Size = 0x6b8;  // UDim2
         public const long SizeOffset = 0x6f8;  // Vector2
         public const long StudsOffset = 0x6e0;  // Vector3
@@ -1519,7 +1517,6 @@ namespace Offsets
         public const long LipPresser = 0x128;  // float
         public const long LipsTogether = 0x12c;  // float
         public const long LowerLipSuck = 0x130;  // float
-        public const long MouthLeft = 0x134;  // float
         public const long MouthRight = 0x138;  // float
         public const long Pucker = 0x13c;  // float
         public const long RightBrowLowerer = 0x140;  // float
@@ -2114,7 +2111,6 @@ namespace Offsets
         public const long DoubleSided = 0x33c;  // bool
         public const long HasJointOffset = 0x33d;  // bool
         public const long HasSkinnedMesh = 0x33e;  // bool
-        public const long JointOffset = 0x328;  // Vector3
         public const long MeshContent = 0x2d0;  // Content
         public const long RenderFidelity = 0x334;  // RenderFidelity
         public const long RenderFidelityReplicate = 0x334;  // RenderFidelity
@@ -3210,6 +3206,10 @@ namespace Offsets
     {
         public const long InertiaMigrated = 0x238;  // bool
         public const long PCDRequestId = 0x230;  // int
+        public const long UnscaledCofm = 0x20c;  // Vector3
+        public const long UnscaledVolInertiaDiags = 0x218;  // Vector3
+        public const long UnscaledVolInertiaOffDiags = 0x224;  // Vector3
+        public const long UnscaledVolume = 0x234;  // float
     }
     public static class UIAspectRatioConstraint
     {
@@ -3256,6 +3256,7 @@ namespace Offsets
     }
     public static class UISizeConstraint
     {
+        public const long MaxSize = 0xa8;  // Vector2; heuristic decode, passed live check
         public const long MinSize = 0xb0;  // Vector2; heuristic decode, passed live check
     }
     public static class UIStroke

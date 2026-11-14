@@ -3,13 +3,13 @@
     "platform": "macOS ARM64 (Apple Silicon)",
     "roblox_version": "0.745.0.7451137",
     "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
-    "dumped_at": "2026-11-14 21:08 UTC",
+    "dumped_at": "2026-11-14 21:10 UTC",
     "dumper": "WeirdExt export_offsets.py",
-    "total": 2334,
-    "confirmed_live": 33,
+    "total": 2335,
+    "confirmed_live": 34,
     "reflected": 2301,
-    "dropped_by_live_check": 14,
-    "promoted_by_live_check": 26
+    "dropped_by_live_check": 12,
+    "promoted_by_live_check": 24
   },
   "offsets": {
     "Instance": {
@@ -34,6 +34,7 @@
     "Player": {
       "ModelInstance": "0x258",
       "Team": "0x298",
+      "UserId": "0xb8",
       "AccountAgeReplicate": "0x31c",
       "AgeChecked": "0x320",
       "AutoJumpEnabled": "0x381",
@@ -405,13 +406,9 @@
     },
     "Attachment": {
       "Axis": "0xa0",
-      "Orientation": "0xa8",
-      "Position": "0xac",
-      "Rotation": "0xa8",
       "SecondaryAxis": "0xb8",
       "Visible": "0xc4",
       "WorldAxis": "0xa0",
-      "WorldPosition": "0xb4",
       "WorldSecondaryAxis": "0xb8"
     },
     "AudioSearchParams": {
@@ -685,6 +682,7 @@
       "ExtentsOffset": "0x6c8",
       "ExtentsOffsetWorldSpace": "0x6d4",
       "LightInfluence": "0x714",
+      "MaxDistance": "0x718",
       "Size": "0x6b8",
       "SizeOffset": "0x6f8",
       "StudsOffset": "0x6e0",
@@ -1386,7 +1384,6 @@
       "LipPresser": "0x128",
       "LipsTogether": "0x12c",
       "LowerLipSuck": "0x130",
-      "MouthLeft": "0x134",
       "MouthRight": "0x138",
       "Pucker": "0x13c",
       "RightBrowLowerer": "0x140",
@@ -1922,7 +1919,6 @@
       "DoubleSided": "0x33c",
       "HasJointOffset": "0x33d",
       "HasSkinnedMesh": "0x33e",
-      "JointOffset": "0x328",
       "MeshContent": "0x2d0",
       "RenderFidelity": "0x334",
       "RenderFidelityReplicate": "0x334",
@@ -2876,7 +2872,11 @@
     },
     "TriangleMeshPart": {
       "InertiaMigrated": "0x238",
-      "PCDRequestId": "0x230"
+      "PCDRequestId": "0x230",
+      "UnscaledCofm": "0x20c",
+      "UnscaledVolInertiaDiags": "0x218",
+      "UnscaledVolInertiaOffDiags": "0x224",
+      "UnscaledVolume": "0x234"
     },
     "UIAspectRatioConstraint": {
       "AspectRatio": "0xa8"
@@ -2918,6 +2918,7 @@
       "TweenTime": "0x150"
     },
     "UISizeConstraint": {
+      "MaxSize": "0xa8",
       "MinSize": "0xb0"
     },
     "UIStroke": {

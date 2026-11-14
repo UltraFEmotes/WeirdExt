@@ -87,6 +87,11 @@
       "value": 264,
       "method": "verify_offsets.py: unique match for the live value (Roblox log / web API)",
       "confidence": 1.0
+    },
+    "Player.UserId": {
+      "value": 184,
+      "confidence": 1.0,
+      "method": "verify_offsets.py: 0xb8 and 0x2d0 held all 13 players' own ids live; 0x2c0 is CharacterAppearanceId"
     }
   },
   "evidence": {

@@ -3,13 +3,13 @@
     "platform": "macOS ARM64 (Apple Silicon)",
     "roblox_version": "0.745.0.7451137",
     "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
-    "dumped_at": "2026-11-14 21:08 UTC",
+    "dumped_at": "2026-11-14 21:10 UTC",
     "dumper": "WeirdExt export_offsets.py",
-    "total": 2334,
-    "confirmed_live": 33,
+    "total": 2335,
+    "confirmed_live": 34,
     "reflected": 2301,
-    "dropped_by_live_check": 14,
-    "promoted_by_live_check": 26,
+    "dropped_by_live_check": 12,
+    "promoted_by_live_check": 24,
     "note": "heuristic getter decodes; confirm live before use"
   },
   "offsets": {
@@ -99,7 +99,20 @@
         "type": "int"
       }
     },
-    "Attachment": {},
+    "Attachment": {
+      "Orientation": {
+        "offset": "0xa8",
+        "type": "Vector3"
+      },
+      "Rotation": {
+        "offset": "0xa8",
+        "type": "Vector3"
+      },
+      "WorldPosition": {
+        "offset": "0xb4",
+        "type": "Vector3"
+      }
+    },
     "AuroraScript": {
       "Source": {
         "offset": "0xe0",
@@ -2531,12 +2544,7 @@
         "type": "int"
       }
     },
-    "UISizeConstraint": {
-      "MaxSize": {
-        "offset": "0xa8",
-        "type": "Vector2"
-      }
-    },
+    "UISizeConstraint": {},
     "UIStroke": {
       "ApplyStrokeMode": {
         "offset": "0xbc",

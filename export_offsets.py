@@ -64,7 +64,7 @@ NOTES = {
     ("DataModel", "GameId"): "int64 (universe id)",
     ("DataModel", "CreatorId"): "int64",
     ("DataModel", "JobId"): "std::string",
-    ("Player", "UserId"): "int64",
+    ("Player", "UserId"): "int64; a second copy sits at 0x2d0",
     ("Primitive", "Rotation"): "nine floats, row-major; Position follows at +36",
     ("Primitive", "AssemblyLinearVelocity"): "copy refreshed from the solver body each physics step",
     ("PrimitiveFlags", "CanCollide"): "bit mask in Primitive::Flags (a byte)",
