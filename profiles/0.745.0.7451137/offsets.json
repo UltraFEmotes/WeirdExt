@@ -1,0 +1,34 @@
+{
+  "version": "0.745.0.7451137",
+  "resolved": {
+    "Instance.Name": {"value": 104},
+    "Instance.Parent": {"value": 96},
+    "Instance.ChildrenStart": {"value": 112},
+    "Instance.ChildrenIndirect": {"value": 1},
+    "Instance.ChildrenEnd": {"value": 8},
+    "Workspace.CurrentCamera": {"value": 1112},
+    "Camera.CFrame": {"value": 184},
+    "Camera.Position": {"value": 220},
+    "Camera.FieldOfView": {"value": 288},
+    "Players.LocalPlayer": {"value": 264},
+    "Player.ModelInstance": {"value": 600},
+    "BasePart.Primitive": {"value": 360},
+    "Primitive.CFrame": {"value": 176},
+    "Primitive.Position": {"value": 212}
+  },
+  "evidence": {
+    "static_geometry_accessors": {
+      "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
+      "selected": {
+        "basepart_primitive_offset": 360,
+        "primitive_cframe_offset": 176,
+        "primitive_position_offset": 212
+      }
+    }
+  },
+  "notes": [
+    "Sanitized runtime profile: no live pointers, object names, samples or memory windows.",
+    "Geometry uses the getter-backed fields from the preserved v5 report.",
+    "Camera.FieldOfView uses the corroborated Camera+0x120 radian getter, not the old heuristic."
+  ]
+}

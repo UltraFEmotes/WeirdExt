@@ -1,0 +1,16 @@
+{
+  "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
+  "selected": {
+    "WalkSpeed": 436,
+    "WalkSpeedCheck": 908,
+    "JumpPower": 392,
+    "UseJumpPower": 454
+  },
+  "candidates": {
+    "WalkSpeed": [{"offset": 436}],
+    "WalkSpeedCheck": [{"offset": 908}],
+    "JumpPower": [{"offset": 392}],
+    "UseJumpPower": [{"offset": 454}]
+  },
+  "limitations": ["Getter-backed fields do not establish server acceptance of external writes."]
+}

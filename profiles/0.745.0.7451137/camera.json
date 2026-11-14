@@ -1,0 +1,13 @@
+{
+  "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
+  "selected": {
+    "camera_cframe_offset": 184,
+    "camera_fov_offset": 288,
+    "camera_fov_unit": "radians"
+  },
+  "candidates": {
+    "CFrame": [{"offset": 184}],
+    "FieldOfView": [{"offset": 288}]
+  },
+  "notes": ["Sanitized summary of the matching offline Camera accessor evidence."]
+}

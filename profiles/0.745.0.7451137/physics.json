@@ -1,0 +1,29 @@
+{
+  "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
+  "selected": {
+    "collision_flags": 446,
+    "collision_mask": 8,
+    "primitive_assembly": 72,
+    "assembly_adjustment": 16,
+    "assembly_root": 64,
+    "root_adjustment": 16,
+    "motion_offset": 104,
+    "velocity": 224,
+    "velocity_mirror": 296
+  },
+  "collision": [{"collision_flags": 446, "collision_mask": 8}],
+  "velocity": [{
+    "primitive_assembly": 72,
+    "assembly_adjustment": 16,
+    "assembly_root": 64,
+    "root_adjustment": 16,
+    "motion_offset": 104,
+    "velocity": 224,
+    "velocity_mirror": 296
+  }],
+  "limitations": [
+    "Infinite Jump is currently nonfunctional in reported live use.",
+    "This summary establishes fields and layouts, not engine acceptance.",
+    "External writes bypass contact notifications, wakeups and PV dirty counters."
+  ]
+}
