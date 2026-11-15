@@ -3613,7 +3613,7 @@
         "offset": "0x11c"
       },
       "LeftInnerBrowRaiser": {
-        "verdict": "inconclusive",
+        "verdict": "pass",
         "samples": 6,
         "offset": "0x108"
       },
@@ -3628,7 +3628,7 @@
         "offset": "0x170"
       },
       "RightInnerBrowRaiser": {
-        "verdict": "inconclusive",
+        "verdict": "pass",
         "samples": 6,
         "offset": "0x158"
       },
@@ -3663,7 +3663,7 @@
         "offset": "0xf8"
       },
       "LeftEyeUpperLidRaiser": {
-        "verdict": "inconclusive",
+        "verdict": "pass",
         "samples": 6,
         "offset": "0x104"
       },
@@ -3678,7 +3678,7 @@
         "offset": "0x148"
       },
       "RightEyeUpperLidRaiser": {
-        "verdict": "inconclusive",
+        "verdict": "pass",
         "samples": 6,
         "offset": "0x154"
       },
@@ -3688,13 +3688,13 @@
         "offset": "0x150"
       },
       "ChinRaiserUpperLip": {
-        "verdict": "inconclusive",
-        "samples": 6,
+        "verdict": "fail",
+        "samples": 1,
         "offset": "0xc4"
       },
       "ChinRaiser": {
-        "verdict": "inconclusive",
-        "samples": 6,
+        "verdict": "fail",
+        "samples": 1,
         "offset": "0xc0"
       },
       "FlatPucker": {
@@ -3723,8 +3723,8 @@
         "offset": "0x12c"
       },
       "MouthLeft": {
-        "verdict": "fail",
-        "samples": 2,
+        "verdict": "inconclusive",
+        "samples": 6,
         "offset": "0x134"
       },
       "MouthRight": {
@@ -3748,7 +3748,7 @@
         "offset": "0xf4"
       },
       "LeftDimpler": {
-        "verdict": "inconclusive",
+        "verdict": "pass",
         "samples": 6,
         "offset": "0xfc"
       },
@@ -3783,7 +3783,7 @@
         "offset": "0x144"
       },
       "RightDimpler": {
-        "verdict": "inconclusive",
+        "verdict": "pass",
         "samples": 6,
         "offset": "0x14c"
       },
@@ -4520,7 +4520,7 @@
     "ShirtGraphic": {
       "Color3": {
         "verdict": "pass",
-        "samples": 1,
+        "samples": 2,
         "offset": "0xd0"
       }
     },
@@ -4970,7 +4970,7 @@
         "offset": "0x28c"
       },
       "Stiffness": {
-        "verdict": "inconclusive",
+        "verdict": "pass",
         "samples": 6,
         "offset": "0x290"
       }
@@ -7103,7 +7103,7 @@
         "offset": "0xac"
       },
       "Density": {
-        "verdict": "pass",
+        "verdict": "inconclusive",
         "samples": 1,
         "offset": "0xb8"
       },
@@ -7446,18 +7446,18 @@
     },
     "Clouds": {
       "Cover": {
-        "verdict": "pass",
-        "samples": 1,
+        "verdict": "no-sample",
+        "samples": 0,
         "offset": "0xa4"
       },
       "Density": {
-        "verdict": "pass",
-        "samples": 1,
+        "verdict": "no-sample",
+        "samples": 0,
         "offset": "0xa8"
       },
       "Enabled": {
-        "verdict": "inconclusive",
-        "samples": 1,
+        "verdict": "no-sample",
+        "samples": 0,
         "offset": "0xac"
       }
     },
@@ -9354,12 +9354,12 @@
       },
       "EmissiveStrength": {
         "verdict": "pass",
-        "samples": 6,
+        "samples": 4,
         "offset": "0x1ac"
       },
       "EmissiveTint": {
         "verdict": "pass",
-        "samples": 6,
+        "samples": 4,
         "offset": "0x19c"
       },
       "RoughnessMapContent": {
@@ -9374,7 +9374,7 @@
       },
       "Color": {
         "verdict": "pass",
-        "samples": 6,
+        "samples": 4,
         "offset": "0x190"
       },
       "ResampleMode": {
@@ -10435,8 +10435,8 @@
         "offset": "0xa0"
       },
       "Position": {
-        "verdict": "fail",
-        "samples": 3,
+        "verdict": "pass",
+        "samples": 6,
         "offset": "0xac"
       },
       "SecondaryAxis": {
@@ -10714,7 +10714,7 @@
     "Constraints_Constraint": {
       "Enabled": {
         "verdict": "inconclusive",
-        "samples": 4,
+        "samples": 2,
         "offset": "0xa1"
       },
       "Color": {
@@ -10724,7 +10724,7 @@
       },
       "Visible": {
         "verdict": "inconclusive",
-        "samples": 4,
+        "samples": 2,
         "offset": "0xdc"
       }
     },
@@ -11275,8 +11275,8 @@
         "offset": "0x33d"
       },
       "JointOffset": {
-        "verdict": "fail",
-        "samples": 1,
+        "verdict": "pass",
+        "samples": 6,
         "offset": "0x328"
       }
     },
@@ -11425,7 +11425,7 @@
     "Constraints_RigidConstraint": {
       "EnableSkinning": {
         "verdict": "inconclusive",
-        "samples": 4,
+        "samples": 2,
         "offset": "0x150"
       }
     },
@@ -11828,23 +11828,23 @@
         "offset": "0x230"
       },
       "UnscaledVolume": {
-        "verdict": "pass",
-        "samples": 6,
+        "verdict": "fail",
+        "samples": 1,
         "offset": "0x234"
       },
       "UnscaledCofm": {
-        "verdict": "inconclusive",
-        "samples": 6,
+        "verdict": "fail",
+        "samples": 1,
         "offset": "0x20c"
       },
       "UnscaledVolInertiaDiags": {
-        "verdict": "pass",
-        "samples": 6,
+        "verdict": "fail",
+        "samples": 1,
         "offset": "0x218"
       },
       "UnscaledVolInertiaOffDiags": {
-        "verdict": "inconclusive",
-        "samples": 6,
+        "verdict": "fail",
+        "samples": 1,
         "offset": "0x224"
       },
       "InertiaMigrated": {
@@ -12637,7 +12637,7 @@
         "offset": "0xc0"
       },
       "HeadColor": {
-        "verdict": "fail",
+        "verdict": "inconclusive",
         "samples": 6,
         "offset": "0xd0"
       },
@@ -12647,7 +12647,7 @@
         "offset": "0xc0"
       },
       "LeftArmColor": {
-        "verdict": "fail",
+        "verdict": "inconclusive",
         "samples": 6,
         "offset": "0xd0"
       },
@@ -12657,7 +12657,7 @@
         "offset": "0xc0"
       },
       "LeftLegColor": {
-        "verdict": "fail",
+        "verdict": "inconclusive",
         "samples": 6,
         "offset": "0xd0"
       },
@@ -12667,7 +12667,7 @@
         "offset": "0xc0"
       },
       "RightArmColor": {
-        "verdict": "fail",
+        "verdict": "inconclusive",
         "samples": 6,
         "offset": "0xd0"
       },
@@ -12677,7 +12677,7 @@
         "offset": "0xc0"
       },
       "RightLegColor": {
-        "verdict": "fail",
+        "verdict": "inconclusive",
         "samples": 6,
         "offset": "0xd0"
       },
@@ -12687,7 +12687,7 @@
         "offset": "0xc0"
       },
       "TorsoColor": {
-        "verdict": "fail",
+        "verdict": "inconclusive",
         "samples": 6,
         "offset": "0xd0"
       }
@@ -15127,8 +15127,8 @@
     },
     "Attachment": {
       "Orientation": {
-        "verdict": "fail",
-        "samples": 5,
+        "verdict": "pass",
+        "samples": 6,
         "offset": "0xa8"
       },
       "WorldAxis": {
@@ -15137,8 +15137,8 @@
         "offset": "0xa0"
       },
       "WorldPosition": {
-        "verdict": "fail",
-        "samples": 3,
+        "verdict": "pass",
+        "samples": 6,
         "offset": "0xb4"
       },
       "WorldSecondaryAxis": {
@@ -15147,8 +15147,8 @@
         "offset": "0xb8"
       },
       "Rotation": {
-        "verdict": "fail",
-        "samples": 5,
+        "verdict": "pass",
+        "samples": 6,
         "offset": "0xa8"
       }
     },

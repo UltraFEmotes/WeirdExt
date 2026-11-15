@@ -22,6 +22,7 @@
 !/dumps/
 !/export_offsets.py
 !/verify_offsets.py
+!/probe_internals.py
 
 /rbxl/*
 !/rbxl/*.py

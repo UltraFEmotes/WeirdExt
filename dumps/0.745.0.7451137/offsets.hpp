@@ -3,8 +3,8 @@
 //
 // Roblox Version  : 0.745.0.7451137
 // Binary SHA-256  : 8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7
-// Dumped At       : 2026-11-14 21:10 UTC
-// Total Offsets   : 2335 (34 confirmed live, 2301 from reflection)
+// Dumped At       : 2026-11-15 03:04 UTC
+// Total Offsets   : 2338 (37 confirmed live, 2301 from reflection)
 //
 // macOS layouts differ from Windows; use these with the macOS client only.
 
@@ -183,6 +183,11 @@ namespace Offsets {
         inline constexpr uintptr_t CreatorId = 0x160;  // int64
         inline constexpr uintptr_t JobId = 0x108;  // std::string
         inline constexpr uintptr_t ForceR15 = 0x190;  // bool
+    }
+    namespace TaskScheduler_Job {
+        inline constexpr uintptr_t Name = 0x18;  // std::string; empty for some jobs
+        inline constexpr uintptr_t DataModel = 0x30;  // pointer; add DataModelInstanceDelta to reach the DataModel Instance
+        inline constexpr uintptr_t DataModelInstanceDelta = 0x1e8;  // byte delta, not a field offset
     }
     namespace Humanoid {
         inline constexpr uintptr_t Health = 0x174;
@@ -405,9 +410,13 @@ namespace Offsets {
     }
     namespace Attachment {
         inline constexpr uintptr_t Axis = 0xa0;  // Vector3
+        inline constexpr uintptr_t Orientation = 0xa8;  // Vector3; heuristic decode, passed live check
+        inline constexpr uintptr_t Position = 0xac;  // Vector3
+        inline constexpr uintptr_t Rotation = 0xa8;  // Vector3; heuristic decode, passed live check
         inline constexpr uintptr_t SecondaryAxis = 0xb8;  // Vector3
         inline constexpr uintptr_t Visible = 0xc4;  // bool
         inline constexpr uintptr_t WorldAxis = 0xa0;  // Vector3; heuristic decode, passed live check
+        inline constexpr uintptr_t WorldPosition = 0xb4;  // Vector3; heuristic decode, passed live check
         inline constexpr uintptr_t WorldSecondaryAxis = 0xb8;  // Vector3; heuristic decode, passed live check
     }
     namespace AudioSearchParams {
@@ -1353,8 +1362,6 @@ namespace Offsets {
         inline constexpr uintptr_t Visible = 0xbc;  // bool
     }
     namespace FaceControls {
-        inline constexpr uintptr_t ChinRaiser = 0xc0;  // float
-        inline constexpr uintptr_t ChinRaiserUpperLip = 0xc4;  // float
         inline constexpr uintptr_t Corrugator = 0xc8;  // float
         inline constexpr uintptr_t EyesLookDown = 0xcc;  // float
         inline constexpr uintptr_t EyesLookLeft = 0xd0;  // float
@@ -1383,6 +1390,7 @@ namespace Offsets {
         inline constexpr uintptr_t LipPresser = 0x128;  // float
         inline constexpr uintptr_t LipsTogether = 0x12c;  // float
         inline constexpr uintptr_t LowerLipSuck = 0x130;  // float
+        inline constexpr uintptr_t MouthLeft = 0x134;  // float
         inline constexpr uintptr_t MouthRight = 0x138;  // float
         inline constexpr uintptr_t Pucker = 0x13c;  // float
         inline constexpr uintptr_t RightBrowLowerer = 0x140;  // float
@@ -1918,6 +1926,7 @@ namespace Offsets {
         inline constexpr uintptr_t DoubleSided = 0x33c;  // bool
         inline constexpr uintptr_t HasJointOffset = 0x33d;  // bool
         inline constexpr uintptr_t HasSkinnedMesh = 0x33e;  // bool
+        inline constexpr uintptr_t JointOffset = 0x328;  // Vector3
         inline constexpr uintptr_t MeshContent = 0x2d0;  // Content
         inline constexpr uintptr_t RenderFidelity = 0x334;  // RenderFidelity
         inline constexpr uintptr_t RenderFidelityReplicate = 0x334;  // RenderFidelity
@@ -2872,10 +2881,6 @@ namespace Offsets {
     namespace TriangleMeshPart {
         inline constexpr uintptr_t InertiaMigrated = 0x238;  // bool
         inline constexpr uintptr_t PCDRequestId = 0x230;  // int
-        inline constexpr uintptr_t UnscaledCofm = 0x20c;  // Vector3
-        inline constexpr uintptr_t UnscaledVolInertiaDiags = 0x218;  // Vector3
-        inline constexpr uintptr_t UnscaledVolInertiaOffDiags = 0x224;  // Vector3
-        inline constexpr uintptr_t UnscaledVolume = 0x234;  // float
     }
     namespace UIAspectRatioConstraint {
         inline constexpr uintptr_t AspectRatio = 0xa8;  // float; heuristic decode, passed live check

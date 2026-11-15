@@ -2,8 +2,8 @@
 //
 // Roblox Version  : 0.745.0.7451137
 // Binary SHA-256  : 8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7
-// Dumped At       : 2026-11-14 21:10 UTC
-// Total Offsets   : 2335 (34 confirmed live, 2301 from reflection)
+// Dumped At       : 2026-11-15 03:04 UTC
+// Total Offsets   : 2338 (37 confirmed live, 2301 from reflection)
 //
 // macOS layouts differ from Windows; use these with the macOS client only.
 
@@ -189,6 +189,12 @@ namespace Offsets
         public const long CreatorId = 0x160;  // int64
         public const long JobId = 0x108;  // std::string
         public const long ForceR15 = 0x190;  // bool
+    }
+    public static class TaskScheduler_Job
+    {
+        public const long Name = 0x18;  // std::string; empty for some jobs
+        public const long DataModel = 0x30;  // pointer; add DataModelInstanceDelta to reach the DataModel Instance
+        public const long DataModelInstanceDelta = 0x1e8;  // byte delta, not a field offset
     }
     public static class Humanoid
     {
@@ -433,9 +439,13 @@ namespace Offsets
     public static class Attachment
     {
         public const long Axis = 0xa0;  // Vector3
+        public const long Orientation = 0xa8;  // Vector3; heuristic decode, passed live check
+        public const long Position = 0xac;  // Vector3
+        public const long Rotation = 0xa8;  // Vector3; heuristic decode, passed live check
         public const long SecondaryAxis = 0xb8;  // Vector3
         public const long Visible = 0xc4;  // bool
         public const long WorldAxis = 0xa0;  // Vector3; heuristic decode, passed live check
+        public const long WorldPosition = 0xb4;  // Vector3; heuristic decode, passed live check
         public const long WorldSecondaryAxis = 0xb8;  // Vector3; heuristic decode, passed live check
     }
     public static class AudioSearchParams
@@ -1487,8 +1497,6 @@ namespace Offsets
     }
     public static class FaceControls
     {
-        public const long ChinRaiser = 0xc0;  // float
-        public const long ChinRaiserUpperLip = 0xc4;  // float
         public const long Corrugator = 0xc8;  // float
         public const long EyesLookDown = 0xcc;  // float
         public const long EyesLookLeft = 0xd0;  // float
@@ -1517,6 +1525,7 @@ namespace Offsets
         public const long LipPresser = 0x128;  // float
         public const long LipsTogether = 0x12c;  // float
         public const long LowerLipSuck = 0x130;  // float
+        public const long MouthLeft = 0x134;  // float
         public const long MouthRight = 0x138;  // float
         public const long Pucker = 0x13c;  // float
         public const long RightBrowLowerer = 0x140;  // float
@@ -2111,6 +2120,7 @@ namespace Offsets
         public const long DoubleSided = 0x33c;  // bool
         public const long HasJointOffset = 0x33d;  // bool
         public const long HasSkinnedMesh = 0x33e;  // bool
+        public const long JointOffset = 0x328;  // Vector3
         public const long MeshContent = 0x2d0;  // Content
         public const long RenderFidelity = 0x334;  // RenderFidelity
         public const long RenderFidelityReplicate = 0x334;  // RenderFidelity
@@ -3206,10 +3216,6 @@ namespace Offsets
     {
         public const long InertiaMigrated = 0x238;  // bool
         public const long PCDRequestId = 0x230;  // int
-        public const long UnscaledCofm = 0x20c;  // Vector3
-        public const long UnscaledVolInertiaDiags = 0x218;  // Vector3
-        public const long UnscaledVolInertiaOffDiags = 0x224;  // Vector3
-        public const long UnscaledVolume = 0x234;  // float
     }
     public static class UIAspectRatioConstraint
     {

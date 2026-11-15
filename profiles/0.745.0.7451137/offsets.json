@@ -92,6 +92,21 @@
       "value": 184,
       "confidence": 1.0,
       "method": "verify_offsets.py: 0xb8 and 0x2d0 held all 13 players' own ids live; 0x2c0 is CharacterAppearanceId"
+    },
+    "Job.DataModel": {
+      "value": 48,
+      "method": "probe_internals.py: unique live match",
+      "confidence": 1.0
+    },
+    "DataModel.InstanceFromJob": {
+      "value": 488,
+      "method": "probe_internals.py: unique live match",
+      "confidence": 1.0
+    },
+    "Job.Name": {
+      "value": 24,
+      "confidence": 1.0,
+      "method": "probe_internals.py: every named job (10/33) holds its name std::string here; the rest are empty"
     }
   },
   "evidence": {
