@@ -11,12 +11,15 @@ MAX_STEP = 35
 
 
 def eligible(target, frame, settings):
-    """Shared by ESP filtering and aim: not you, not a teammate (when checked), not dead."""
+    """Not you, not a teammate (when checked), not dead; with the health check, only players at or
+    below the chosen health."""
     if target.is_local:
         return False
     if settings.team_check and target.team and target.team == frame.local_team:
         return False
-    return target.health is None or target.health > 0
+    if target.health is None:
+        return True
+    return target.health > 0 and (not settings.aim_health_check or target.health <= settings.aim_health_value)
 
 
 def _aim_point(target, settings, project_point, center):
@@ -36,20 +39,19 @@ def _aim_point(target, settings, project_point, center):
     return world, project_point(world)
 
 
-def aim_step(frame, fov, viewport, settings, elapsed, basis_mode="columns", locked=None):
-    """Return a correction toward the chosen target in the radius.
+def choose_target(frame, fov, viewport, settings, basis_mode="columns", locked=None, center=None, radius=None):
+    """(target, world point, screen point, error from centre) for the best eligible target in the radius.
 
-    Priority picks by crosshair distance or world distance. A sticky lock
-    keeps the previous target while it stays eligible and inside the radius.
-    No visibility claim, prediction, firing or input action; the native
-    helper independently gates delivery.
-    """
-    if (not settings.aim_enabled or not frame.complete or frame.rotation is None
-            or frame.position is None or not math.isfinite(elapsed) or not 0 < elapsed <= 0.1
+    The circle defaults to the aimbot's (screen centre, aim_radius); silent aim
+    passes the cursor and its own radius. Priority picks by distance from the
+    circle's centre or world distance. A sticky lock keeps the previous target
+    while it stays eligible and inside the radius."""
+    if (not frame.complete or frame.rotation is None or frame.position is None
             or not math.isfinite(fov) or not 1 < fov < 179
             or not all(math.isfinite(value) and value > 0 for value in viewport)):
         return None
-    center = viewport[0] / 2, viewport[1] / 2
+    center = center or (viewport[0] / 2, viewport[1] / 2)
+    radius = settings.aim_radius if radius is None else radius
 
     def project_point(world):
         point = project((frame.rotation, frame.position), fov, viewport, world, basis_mode)
@@ -65,14 +67,27 @@ def aim_step(frame, fov, viewport, settings, elapsed, basis_mode="columns", lock
         if point is None:
             continue
         error = point[0] - center[0], point[1] - center[1]
-        if math.hypot(*error) > settings.aim_radius:
+        if math.hypot(*error) > radius:
             continue
         rank = math.hypot(*error) if settings.aim_priority == "crosshair" else math.dist(frame.position, world)
         candidates.append((rank, target, world, point, error))
     if not candidates:
         return None
     sticky = [candidate for candidate in candidates if settings.aim_sticky and candidate[1].address == locked]
-    _, target, world, point, error = sticky[0] if sticky else min(candidates, key=lambda candidate: candidate[0])
+    return (sticky[0] if sticky else min(candidates, key=lambda candidate: candidate[0]))[1:]
+
+
+def aim_step(frame, fov, viewport, settings, elapsed, basis_mode="columns", locked=None):
+    """A bounded, smoothed correction toward the chosen target, or None.
+
+    No visibility claim, prediction, firing or input action; the native helper
+    independently gates delivery."""
+    if not settings.aim_enabled or not math.isfinite(elapsed) or not 0 < elapsed <= 0.1:
+        return None
+    chosen = choose_target(frame, fov, viewport, settings, basis_mode, locked)
+    if chosen is None:
+        return None
+    target, world, point, error = chosen
     gain = -math.expm1(-60 * min(elapsed, 0.05) / settings.aim_smoothing)
     dx, dy = error[0] * gain, error[1] * gain
     length = math.hypot(dx, dy)

@@ -3,8 +3,8 @@
 //
 // Roblox Version  : 0.745.0.7451137
 // Binary SHA-256  : 8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7
-// Dumped At       : 2026-11-15 03:04 UTC
-// Total Offsets   : 2338 (37 confirmed live, 2301 from reflection)
+// Dumped At       : 2026-11-15 03:43 UTC
+// Total Offsets   : 2340 (40 confirmed live, 2300 from reflection)
 //
 // macOS layouts differ from Windows; use these with the macOS client only.
 
@@ -84,6 +84,13 @@ namespace Offsets {
         inline constexpr uintptr_t VREnabled = 0x390;  // bool
         inline constexpr uintptr_t VoiceChatVolume = 0x37c;  // float
     }
+    namespace Team {
+        inline constexpr uintptr_t TeamColor = 0xa0;
+        inline constexpr uintptr_t AutoAssignable = 0xa4;  // bool
+        inline constexpr uintptr_t AutoColorCharacters = 0xa5;  // bool
+        inline constexpr uintptr_t ChildOrder = 0x98;  // int
+        inline constexpr uintptr_t Score = 0x9c;  // int
+    }
     namespace Workspace {
         inline constexpr uintptr_t CurrentCamera = 0x458;
         inline constexpr uintptr_t AirTurbulenceIntensity = 0x490;  // float
@@ -138,6 +145,8 @@ namespace Offsets {
         inline constexpr uintptr_t Position = 0xdc;
         inline constexpr uintptr_t FieldOfView = 0x120;  // float, radians (vertical)
         inline constexpr uintptr_t CameraSubject = 0xa8;  // (object, control block) smart pointer pair
+        inline constexpr uintptr_t ViewportInt16 = 0x27c;  // (int16 width, int16 height); what Mouse.Hit rays are built from
+        inline constexpr uintptr_t ViewportSize = 0x2bc;  // Vector2 float
         inline constexpr uintptr_t CFrame = 0xb8;  // CoordinateFrame
         inline constexpr uintptr_t CameraType = 0x118;  // Enums::CameraTypeEnum::CameraType
         inline constexpr uintptr_t DiagonalFieldOfView = 0x11c;  // float
@@ -2725,13 +2734,6 @@ namespace Offsets {
         inline constexpr uintptr_t PitchSpeedFactor = 0xc8;  // float
         inline constexpr uintptr_t RollMaxTorque = 0xcc;  // float
         inline constexpr uintptr_t RollSpeedFactor = 0xd0;  // float
-    }
-    namespace Team {
-        inline constexpr uintptr_t AutoAssignable = 0xa4;  // bool
-        inline constexpr uintptr_t AutoColorCharacters = 0xa5;  // bool
-        inline constexpr uintptr_t ChildOrder = 0x98;  // int
-        inline constexpr uintptr_t Score = 0x9c;  // int
-        inline constexpr uintptr_t TeamColor = 0xa0;  // BrickColor
     }
     namespace TeleportOptions {
         inline constexpr uintptr_t ReservedServerAccessCode = 0x98;

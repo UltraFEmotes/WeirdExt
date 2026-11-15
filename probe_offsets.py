@@ -5,6 +5,7 @@
     sudo .venv/bin/python probe_offsets.py health    # Humanoid.Health/MaxHealth; you take damage
     sudo .venv/bin/python probe_offsets.py subject   # Camera.CameraSubject + Instance.WeakThis (read-only)
     sudo .venv/bin/python probe_offsets.py teleport  # solver position; you stand still, it lifts you
+    sudo .venv/bin/python probe_offsets.py viewport  # Camera viewport size (int16 pair); you resize the window
 
 Features that need a field (team colors, health bars, spectate, teleport) stay
 off until it is recorded. A field is written only when exactly one offset
@@ -233,7 +234,52 @@ def probe_teleport(profile, reader, local):
     print(f"[probe] recorded solver positions {[hex(offset) for offset in blocks]} "
           f"({'held' if held > once else 'single'} write) in {path}")
 
-PROBES = {"team": probe_team, "health": probe_health, "subject": probe_subject, "teleport": probe_teleport}
+VIEWPORT_WINDOW = 0x800  # Camera bytes searched for the viewport size
+
+
+def viewport_pairs(reader, camera):
+    """{offset: (w, h)} for int16 pairs in the camera that look like a window size."""
+    raw = reader.mem.read(camera, VIEWPORT_WINDOW)
+    pairs = {}
+    for offset in range(0, VIEWPORT_WINDOW - 3, 2):
+        width, height = struct.unpack_from("<hh", raw, offset)
+        if 200 <= width <= 8000 and 150 <= height <= 6000 and 0.5 <= width / height <= 3.5:
+            pairs[offset] = (width, height)
+    floats = {}
+    for offset in range(0, VIEWPORT_WINDOW - 7, 4):
+        width, height = struct.unpack_from("<ff", raw, offset)
+        if 200 <= width <= 8000 and 150 <= height <= 6000 and width.is_integer() and height.is_integer():
+            floats[offset] = (int(width), int(height))
+    return pairs, floats
+
+
+def probe_viewport(profile, reader, local):
+    """The camera's viewport size is the pair that changes, consistently, when the window is resized."""
+    camera = reader.pointer(reader.workspace + reader.spec.camera)
+    if reader.klass(camera) != "RBX::Camera":
+        raise RuntimeError("CurrentCamera not found")
+    before, before_floats = viewport_pairs(reader, camera)
+    print(f"[probe] window-sized int16 pairs: {[(hex(o), v) for o, v in before.items()]}")
+    print(f"[probe] window-sized float pairs: {[(hex(o), v) for o, v in before_floats.items()]}")
+    input("[probe] now RESIZE the Roblox window noticeably (drag a corner), then press Enter… ")
+    after, after_floats = viewport_pairs(reader, camera)
+    changed = [offset for offset, size in before.items() if offset in after and after[offset] != size]
+    changed_floats = [offset for offset, size in before_floats.items()
+                      if offset in after_floats and after_floats[offset] != size]
+    print(f"[probe] int16 pairs that followed the resize: {[(hex(o), before[o], after[o]) for o in changed]}")
+    print(f"[probe] float pairs that followed the resize: "
+          f"{[(hex(o), before_floats[o], after_floats[o]) for o in changed_floats]}")
+    if len(changed) != 1:
+        raise RuntimeError("viewport size is not unique; resize more and retry — paste this output")
+    fields = {"Camera.ViewportInt16": changed[0]}
+    matching = [offset for offset in changed_floats if after_floats[offset] == after[changed[0]]]
+    if len(matching) == 1:
+        fields["Camera.ViewportSize"] = matching[0]
+    record(profile, fields, "live probe: the window-sized pair that followed a window resize")
+
+
+PROBES = {"team": probe_team, "health": probe_health, "subject": probe_subject, "teleport": probe_teleport,
+          "viewport": probe_viewport}
 
 
 def main(argv=None):

@@ -2,8 +2,8 @@
 //
 // Roblox Version  : 0.745.0.7451137
 // Binary SHA-256  : 8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7
-// Dumped At       : 2026-11-15 03:04 UTC
-// Total Offsets   : 2338 (37 confirmed live, 2301 from reflection)
+// Dumped At       : 2026-11-15 03:43 UTC
+// Total Offsets   : 2340 (40 confirmed live, 2300 from reflection)
 //
 // macOS layouts differ from Windows; use these with the macOS client only.
 
@@ -85,6 +85,14 @@ namespace Offsets
         public const long VREnabled = 0x390;  // bool
         public const long VoiceChatVolume = 0x37c;  // float
     }
+    public static class Team
+    {
+        public const long TeamColor = 0xa0;
+        public const long AutoAssignable = 0xa4;  // bool
+        public const long AutoColorCharacters = 0xa5;  // bool
+        public const long ChildOrder = 0x98;  // int
+        public const long Score = 0x9c;  // int
+    }
     public static class Workspace
     {
         public const long CurrentCamera = 0x458;
@@ -141,6 +149,8 @@ namespace Offsets
         public const long Position = 0xdc;
         public const long FieldOfView = 0x120;  // float, radians (vertical)
         public const long CameraSubject = 0xa8;  // (object, control block) smart pointer pair
+        public const long ViewportInt16 = 0x27c;  // (int16 width, int16 height); what Mouse.Hit rays are built from
+        public const long ViewportSize = 0x2bc;  // Vector2 float
         public const long CFrame = 0xb8;  // CoordinateFrame
         public const long CameraType = 0x118;  // Enums::CameraTypeEnum::CameraType
         public const long DiagonalFieldOfView = 0x11c;  // float
@@ -3042,14 +3052,6 @@ namespace Offsets
         public const long PitchSpeedFactor = 0xc8;  // float
         public const long RollMaxTorque = 0xcc;  // float
         public const long RollSpeedFactor = 0xd0;  // float
-    }
-    public static class Team
-    {
-        public const long AutoAssignable = 0xa4;  // bool
-        public const long AutoColorCharacters = 0xa5;  // bool
-        public const long ChildOrder = 0x98;  // int
-        public const long Score = 0x9c;  // int
-        public const long TeamColor = 0xa0;  // BrickColor
     }
     public static class TeleportOptions
     {

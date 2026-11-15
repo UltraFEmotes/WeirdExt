@@ -42,10 +42,10 @@ memory readback is not proof that a gameplay feature works in the live engine.
 | ImGui menu: sidebar, themes, saved settings, per-feature keybinds, aim key | Working in reported live use |
 | Explorer property panel | Implemented |
 | Player list with avatars: teleport and spectate | Working in reported live use; offsets from `probe_offsets.py teleport` / `subject` |
-| Fast attach (module global chain) | Experimental: chains found so far did not survive a Roblox restart; attach falls back to the sweep |
+| Instant attach (module global chain) | Self-healing: learned after any full sweep and saved to the profile; one chain survived a Roblox restart in reported use |
 | Native Visuals / Player / Aim settings | Implemented |
 | Explorer | Working in reported live use; snapshots refresh on request |
-| Leaving a game and joining another | **Unreliable in reported live use; under investigation** |
+| Leaving a game and joining another | Rejoins retry instant attach every 2 s; awaiting live confirmation |
 | Actual camera FOV for projection | Implemented; no assumed-FOV projection fallback |
 | Camera FOV modification | Opt-in; same-binary evidence required |
 | Speed and Jump Power modification | Opt-in, experimental; Speed also updates its check field |
@@ -300,6 +300,9 @@ locally ad-hoc signed, not Developer ID notarized.
 - **Off-screen arrows**: edge arrows toward players outside the view or behind you.
 - **Health bars** and team colors need `Humanoid.Health/MaxHealth` and
   `Player.Team` in the profile; see [Updating client profiles](#updating-client-profiles).
+  Boxes, arrows and the Players tab use each team's real **TeamColor**
+  (`Team.TeamColor`, a BrickColor number mapped through Roblox's published
+  palette in `rbxl/brickcolors.json`); players without a team use the theme accent.
 - **Hide teammates**: drops players on your team from ESP and from aim.
 - **Center mark**: marks overlay center; it is not proof that camera offsets are
   correct.
@@ -342,6 +345,27 @@ Enable **Aimbot**, choose **Mouse** or **Camera**, set **Radius** and
 - Dead players (health 0, when health is in the profile) are skipped, and
   **Hide teammates** also skips teammates.
 
+- **Health check**: aim always skips dead players; with the check on it only
+  targets players at or below **Max target health**.
+- **Silent aim** (own **Silent** tab; needs `probe_offsets.py viewport`): uses
+  the Aim tab's part, priority and checks, with its own FOV circle that follows
+  the cursor and a line to the target being hit. It never moves the camera or cursor. Guns that aim with
+  `Mouse.Hit` / `Camera:ScreenPointToRay` build their ray from the cursor and the
+  camera's viewport size; while a target is in the radius WeirdExt writes a
+  stretched viewport size (`Camera.ViewportInt16`, at most ±65%, re-asserted
+  every 4 ms) so the cursor's ray lands on the target, and restores the real size whenever there is
+  no target. Games that raycast from the camera or validate shots on the server
+  are not affected, and on-screen UI can shift while it is active.
+
+**Configs** tab: type a name and save to keep your visuals, aim tuning, silent
+FOV, key binds, theme and hit sounds as
+`~/Library/Application Support/WeirdExt/configs/<name>.json`; select one to load
+or delete it. Configs are plain JSON, so they can be shared. Features that write
+game memory (speed, fly, noclip, aimbot, silent aim) are never switched on by a config.
+
+The aimbot pauses (and says so) when a memory read takes over 150 ms, since the
+positions it would aim at are stale.
+
 Mouse mode uses bounded smoothed deltas and requires Accessibility. Camera mode
 writes rotation only, with quaternion interpolation; camera translation is not
 written. Custom camera scripts, stale state, missing permission and game
@@ -362,6 +386,14 @@ distance and health.
   live object (one reference leaks instead). It ends on its own when the target
   leaves or respawns, or when Roblox changes the camera itself. Needs
   `probe_offsets.py subject` (read-only).
+
+### Misc: hit sounds
+
+Plays a sound **on damage** (an enemy's health drops within 0.35 s of your click)
+or **on shoot** (every left click in Roblox). Choose from the macOS system sounds
+or your own `.wav/.mp3/.aiff` files in
+`~/Library/Application Support/WeirdExt/sounds`; volume and choice are saved.
+Nothing is written to the game.
 
 ### Keybinds
 
@@ -436,6 +468,14 @@ Roblox PID rather than remaining pinned to an exited process.
 
 ## Leaving and rejoining games
 
+**Instant attach.** Whenever WeirdExt has to run the full sweep, it then looks
+for a client module global that leads to the live DataModel, verifies it by
+attaching through it, and saves it to the profile (`fast_attach`). From then on
+attaching is a few reads. While a path is known, rejoining retries the instant
+attach every 2 seconds, so the external reconnects shortly after the new game
+loads; only if that keeps failing for 30 seconds does it fall back to one full
+sweep, which relearns the path.
+
 Leave WeirdExt running when exiting a game or joining another one. Recovery
 checks service ownership and sustained incomplete frames rather than relying on
 old addresses still having readable vtables.
@@ -488,6 +528,7 @@ sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" team     # Player.Team: tea
 sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" health   # Humanoid.Health/MaxHealth: health bars
 sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" subject  # CameraSubject + WeakThis: spectate (read-only)
 sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" teleport # solver position: teleport (lifts you 10 studs)
+sudo "$PWD/.venv/bin/python" "$PWD/probe_offsets.py" viewport # Camera.ViewportInt16: silent aim (resize the window)
 ```
 
 `probe_jump_velocity.py` writes to candidate memory during falls; use a

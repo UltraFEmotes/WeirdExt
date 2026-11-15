@@ -27,6 +27,7 @@
 /rbxl/*
 !/rbxl/*.py
 !/rbxl/*.mm
+!/rbxl/brickcolors.json
 # Obsolete readers and the old third-party seed are not runtime dependencies.
 /rbxl/state.py
 /rbxl/offsets.py

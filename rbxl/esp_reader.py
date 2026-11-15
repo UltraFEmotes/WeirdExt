@@ -39,6 +39,8 @@ class OffsetSpec:
     humanoid_health: int | None = None
     humanoid_max_health: int | None = None
     player_team: int | None = None
+    team_color: int | None = None      # Team.TeamColor: int32 BrickColor number
+    viewport_int16: int | None = None  # Camera viewport size, (int16 width, int16 height)
     camera_subject: int | None = None  # Camera smart pointer (object, control block)
     weak_this: int | None = None       # every Instance's own (self, control block) pair
     fast_slot: int | None = None   # module-relative global that leads to the DataModel
@@ -107,7 +109,8 @@ class OffsetSpec:
                    value("Player.ModelInstance"), primitive, frame, value("Workspace.CurrentCamera"),
                    camera_frame, optional("Players.LocalPlayer"), digest, optional("Camera.FieldOfView"),
                    humanoid_health=health[0], humanoid_max_health=health[1],
-                   player_team=optional("Player.Team"), camera_subject=optional("Camera.CameraSubject"),
+                   player_team=optional("Player.Team"), team_color=optional("Team.TeamColor"),
+                   viewport_int16=optional("Camera.ViewportInt16"), camera_subject=optional("Camera.CameraSubject"),
                    weak_this=optional("Instance.WeakThis"),
                    fast_slot=fast["slot"] if fast else None, fast_hops=tuple(fast["hops"]) if fast else ())
 
@@ -137,6 +140,7 @@ class Target:
     health: float | None = None
     max_health: float | None = None
     team: int = 0  # Team instance address; 0 = no team or offset unavailable
+    team_color: int | None = None  # BrickColor number of that Team
 
 
 @dataclass
@@ -190,16 +194,22 @@ class ESPReader:
             raise RuntimeError("discovery did not recover DataModel, Players and Workspace")
 
     @classmethod
-    def attach(cls, pid: int, spec: OffsetSpec, *, fresh=False):
+    def attach(cls, pid: int, spec: OffsetSpec, *, fresh=False, sweep=True):
+        """Instant attach through the profile's global chain, else a full sweep (unless sweep=False).
+
+        The returned reader's `via_fast` says which way it attached."""
         print(f"[esp] attaching read-only to pid {pid}; {'fresh' if fresh else 'cached'} discovery", flush=True)
         mem = MachProcess(pid)
         try:
             if spec.fast_slot is not None:
                 try:
                     reader = cls._fast_attach(mem, spec)
+                    reader.via_fast = True
                     print(f"[esp] fast attach: DataModel {reader.root:#x} via the profile's global chain", flush=True)
                     return reader
                 except (WalkError, MemoryFault, MachOError) as exc:
+                    if not sweep:
+                        raise WalkError(f"instant attach not ready yet ({exc})") from exc
                     # The chain is a profile shortcut; the sweep remains the source of truth.
                     print(f"[esp] fast attach unavailable ({exc}); running full discovery", flush=True)
             for bypass_cache in ((True,) if fresh else (False, True)):
@@ -218,6 +228,7 @@ class ESPReader:
                             spec.name, spec.parent, spec.children, 16, "ptr"):
                         raise RuntimeError("live discovered layout differs from offset report")
                     reader = cls._select_session(mem, model, layout, spec)
+                    reader.via_fast = False
                     print(f"[esp] discovery complete: DataModel {reader.root:#x}", flush=True)
                     return reader
                 except WalkError:
@@ -409,6 +420,15 @@ class ESPReader:
                 health = max_health = None
         return frame[1], tuple(parts), health, max_health, self.team(player_addr)
 
+    def team_color(self, team):
+        """The Team's BrickColor number, or None when unknown."""
+        if not team or self.spec.team_color is None:
+            return None
+        try:
+            return struct.unpack("<i", self.mem.read(team + self.spec.team_color, 4))[0]
+        except MemoryFault:
+            return None
+
     def team(self, player_addr):
         if self.spec.player_team is None:
             return 0
@@ -447,15 +467,17 @@ class ESPReader:
         local = local if local in roster else 0
         local_read = self._read_target(local, now, ()) if local else None
         local_position = local_read[0] if local_read else None
-        targets = []
+        targets, team_colors = [], {}
         for player in roster:
             if player == local and not show_local:
                 continue
             read = local_read if player == local else self._read_target(player, now, wanted)
             if read is not None:
                 position, parts, health, max_health, team = read
+                if team not in team_colors:
+                    team_colors[team] = self.team_color(team)
                 targets.append(Target(self.name(player) or f"Player {player:#x}", position, player == local,
-                                      player, parts, health, max_health, team))
+                                      player, parts, health, max_health, team, team_colors[team]))
         status = "Connected — macOS ARM64 external"
         if not local:
             status += "; local player unknown"

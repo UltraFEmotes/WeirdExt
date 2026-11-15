@@ -6,7 +6,8 @@ CHOICES = {"aim_method": ("mouse", "camera"), "aim_part": ("head", "torso", "clo
            "aim_priority": ("crosshair", "distance")}
 RANGES = {"box_height": (1, 20), "box_ratio": (0.2, 2), "fps": (1, 60), "fov": (30, 120),
           "walk_speed": (0, 150), "jump_power": (0, 200), "aim_radius": (20, 400),
-          "aim_smoothing": (1, 20), "fly_speed": (5, 300)}
+          "aim_smoothing": (1, 20), "fly_speed": (5, 300), "aim_health_value": (1, 1000),
+          "silent_radius": (20, 600)}
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,11 @@ class Settings:
     aim_part: str = "torso"
     aim_priority: str = "crosshair"
     aim_sticky: bool = True
+    aim_health_check: bool = False
+    aim_health_value: float = 50.0
+    silent_aim: bool = False
+    silent_radius: float = 160.0
+    silent_show_fov: bool = True
     noclip: bool = False
     infinite_jump: bool = False
     fly: bool = False

@@ -3,11 +3,11 @@
     "platform": "macOS ARM64 (Apple Silicon)",
     "roblox_version": "0.745.0.7451137",
     "binary_sha256": "8af3f95d347a5283618dd9c17f4a1b02b59982ff699f00cc6f2a195377f2f6b7",
-    "dumped_at": "2026-11-15 03:04 UTC",
+    "dumped_at": "2026-11-15 03:43 UTC",
     "dumper": "WeirdExt export_offsets.py",
-    "total": 2338,
-    "confirmed_live": 37,
-    "reflected": 2301,
+    "total": 2340,
+    "confirmed_live": 40,
+    "reflected": 2300,
     "dropped_by_live_check": 15,
     "promoted_by_live_check": 27
   },
@@ -85,6 +85,13 @@
       "VREnabled": "0x390",
       "VoiceChatVolume": "0x37c"
     },
+    "Team": {
+      "TeamColor": "0xa0",
+      "AutoAssignable": "0xa4",
+      "AutoColorCharacters": "0xa5",
+      "ChildOrder": "0x98",
+      "Score": "0x9c"
+    },
     "Workspace": {
       "CurrentCamera": "0x458",
       "AirTurbulenceIntensity": "0x490",
@@ -139,6 +146,8 @@
       "Position": "0xdc",
       "FieldOfView": "0x120",
       "CameraSubject": "0xa8",
+      "ViewportInt16": "0x27c",
+      "ViewportSize": "0x2bc",
       "CFrame": "0xb8",
       "CameraType": "0x118",
       "DiagonalFieldOfView": "0x11c",
@@ -2726,13 +2735,6 @@
       "PitchSpeedFactor": "0xc8",
       "RollMaxTorque": "0xcc",
       "RollSpeedFactor": "0xd0"
-    },
-    "Team": {
-      "AutoAssignable": "0xa4",
-      "AutoColorCharacters": "0xa5",
-      "ChildOrder": "0x98",
-      "Score": "0x9c",
-      "TeamColor": "0xa0"
     },
     "TeleportOptions": {
       "ReservedServerAccessCode": "0x98",

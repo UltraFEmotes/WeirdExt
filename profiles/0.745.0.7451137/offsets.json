@@ -107,6 +107,21 @@
       "value": 24,
       "confidence": 1.0,
       "method": "probe_internals.py: every named job (10/33) holds its name std::string here; the rest are empty"
+    },
+    "Team.TeamColor": {
+      "value": 160,
+      "confidence": 1.0,
+      "method": "reflection: Team.TeamColor getter is a single ldr w0 (BrickColor number)"
+    },
+    "Camera.ViewportInt16": {
+      "value": 636,
+      "method": "live probe: the window-sized pair that followed a window resize",
+      "confidence": 1.0
+    },
+    "Camera.ViewportSize": {
+      "value": 700,
+      "method": "live probe: the window-sized pair that followed a window resize",
+      "confidence": 1.0
     }
   },
   "evidence": {
@@ -123,5 +138,12 @@
     "Sanitized runtime profile: no live pointers, object names, samples or memory windows.",
     "Geometry uses the getter-backed fields from the preserved v5 report.",
     "Camera.FieldOfView uses the corroborated Camera+0x120 radian getter, not the old heuristic."
-  ]
+  ],
+  "fast_attach": {
+    "slot": 111717744,
+    "hops": [
+      96
+    ],
+    "method": "module global chain resolved to the live DataModel"
+  }
 }

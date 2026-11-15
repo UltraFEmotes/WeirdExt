@@ -33,7 +33,7 @@ namespace {
 constexpr double kTickHz = 60.0;
 constexpr double kFrameMaxAge = 0.25;
 constexpr double kAimMaxStep = 35.001;
-constexpr double kAimMaxAge = 0.05;
+constexpr double kAimMaxAge = 0.15;  // reads routinely take 40-80 ms; older than this is stale
 constexpr double kWindowPollInterval = 0.25;
 constexpr double kWindowLossGrace = 0.5;
 constexpr double kToastLifetime = 4.0;
@@ -62,6 +62,14 @@ const Base kBases[] = {
     {"Slate", {0.075f, 0.090f, 0.120f, 1}, {0.058f, 0.070f, 0.096f, 1}, {0.098f, 0.115f, 0.150f, 1}}};
 int accentIndex = 0, baseIndex = 0;
 bool showWatermark = true;
+
+// Hit sounds (overlay only; nothing is written to the game).
+enum HitMode { HitOnDamage, HitOnShoot };
+bool hitEnabled = false;
+int hitMode = HitOnDamage;
+int hitSound = 0;
+double hitVolume = 70;
+constexpr double kHitWindow = 0.35;  // seconds after a click in which an enemy health drop counts as your hit
 
 ImU32 accentU32() { return kAccents[accentIndex].color; }
 const Base& base() { return kBases[baseIndex]; }
@@ -114,7 +122,14 @@ struct Marker {
     std::vector<float> bones;  // normalized x1, y1, x2, y2 per bone
     std::optional<double> health;  // 0..1
     int team = 0;
+    std::optional<ImU32> color;  // the Team's real TeamColor
 };
+
+std::optional<ImU32> teamRgb(NSDictionary* entry) {
+    NSArray* rgb = entry[@"color"];
+    if (![rgb isKindOfClass:NSArray.class] || rgb.count != 3) return std::nullopt;
+    return IM_COL32([rgb[0] intValue], [rgb[1] intValue], [rgb[2] intValue], 255);
+}
 
 struct PlayerRow {
     long long key = 0;
@@ -122,6 +137,7 @@ struct PlayerRow {
     std::optional<double> health;  // 0..1
     double distance = 0;
     int team = 0;
+    std::optional<ImU32> color;  // the Team's real TeamColor
     bool teammate = false;
 };
 
@@ -129,6 +145,7 @@ struct Offscreen {
     double angle = 0, distance = 0;
     std::string name;
     int team = 0;
+    std::optional<ImU32> color;  // the Team's real TeamColor
 };
 
 struct AimStep {
@@ -146,12 +163,21 @@ struct RenderOptions {
     bool skeleton = false, tracers = false, offscreen = false, health = true;
 };
 
+struct SilentTarget {
+    double x, y;
+    std::string name;
+};
+
 struct DisplayFrame {
     int roster = 0;
     std::vector<PlayerRow> players;
     long long spectating = 0;
     std::string playerStatus;
     bool spectateAvailable = false, teleportAvailable = false;
+    bool silentAvailable = false, silentEnabled = false;
+    std::string silentStatus;
+    std::optional<double> silentRadius;
+    std::optional<SilentTarget> silentTarget;
     std::vector<Marker> targets;
     std::vector<Offscreen> offscreen;
     std::string status;
@@ -182,13 +208,21 @@ std::optional<DisplayFrame> decodeFrame(NSDictionary* packet) {
             }
             frame.players.push_back({[entry[@"key"] longLongValue], text(entry, @"name", kNameLimit),
                                      number(entry, @"health"), number(entry, @"distance").value_or(0),
-                                     (int)number(entry, @"team").value_or(0), flag(entry, @"teammate")});
+                                     (int)number(entry, @"team").value_or(0), teamRgb(entry), flag(entry, @"teammate")});
         }
     }
     if ([packet[@"spectating"] isKindOfClass:NSNumber.class]) frame.spectating = [packet[@"spectating"] longLongValue];
     frame.playerStatus = text(packet, @"player_status");
     frame.spectateAvailable = flag(packet, @"spectate_available");
     frame.teleportAvailable = flag(packet, @"teleport_available");
+    frame.silentAvailable = flag(packet, @"silent_available");
+    frame.silentStatus = text(packet, @"silent_status");
+    frame.silentEnabled = flag(packet, @"silent_enabled");
+    frame.silentRadius = number(packet, @"silent_radius");
+    if (NSDictionary* target = object(packet, @"silent_target")) {
+        auto x = number(target, @"x"), y = number(target, @"y");
+        if (x && y) frame.silentTarget = SilentTarget{*x, *y, text(target, @"name")};
+    }
     frame.complete = packet[@"complete"] == nil || flag(packet, @"complete");
     frame.readMs = std::max(0.0, number(packet, @"read_ms").value_or(0));
     for (NSDictionary* entry in targets) {
@@ -197,7 +231,7 @@ std::optional<DisplayFrame> decodeFrame(NSDictionary* packet) {
         if (!x || !y || !distance) return std::nullopt;
         Marker marker{*x, *y, *distance, number(entry, @"w"), number(entry, @"h"),
                       text(entry, @"name", kNameLimit), {}, number(entry, @"health"),
-                      (int)number(entry, @"team").value_or(0)};
+                      (int)number(entry, @"team").value_or(0), teamRgb(entry)};
         if (NSArray* bones = entry[@"bones"]; [bones isKindOfClass:NSArray.class] && bones.count % 4 == 0) {
             for (NSNumber* value in bones) {
                 if (![value isKindOfClass:NSNumber.class] || !std::isfinite(value.doubleValue)) return std::nullopt;
@@ -212,7 +246,7 @@ std::optional<DisplayFrame> decodeFrame(NSDictionary* packet) {
             auto angle = number(entry, @"angle"), distance = number(entry, @"distance");
             if (!angle || !distance) return std::nullopt;
             frame.offscreen.push_back({*angle, *distance, text(entry, @"name", kNameLimit),
-                                       (int)number(entry, @"team").value_or(0)});
+                                       (int)number(entry, @"team").value_or(0), teamRgb(entry)});
         }
     }
     if (NSDictionary* options = object(packet, @"options")) {
@@ -292,7 +326,8 @@ struct Slider {
 const Slider kSliders[] = {
     {"box_height", 1, 20, false}, {"box_ratio", 0.2, 2, false}, {"fps", 1, 60, true},
     {"fov", 30, 120, true}, {"walk_speed", 0, 150, true}, {"jump_power", 0, 200, true},
-    {"aim_radius", 20, 400, true}, {"aim_smoothing", 1, 20, true}, {"fly_speed", 5, 300, true},
+    {"aim_radius", 20, 400, true}, {"aim_smoothing", 1, 20, true}, {"fly_speed", 5, 300, true}, {"aim_health_value", 1, 1000, true},
+    {"silent_radius", 20, 600, true},
 };
 
 const std::map<std::string, std::vector<std::string>> kChoices{
@@ -301,7 +336,7 @@ const std::map<std::string, std::vector<std::string>> kChoices{
 
 // Features that write game memory: never restored from disk, always start off.
 const char* const kWriteFeatures[] = {"walk_speed_enabled", "jump_power_enabled", "noclip",
-                                      "infinite_jump", "fov_enabled", "aim_enabled", "fly"};
+                                      "infinite_jump", "fov_enabled", "aim_enabled", "fly", "silent_aim"};
 
 bool isWriteFeature(const std::string& key) {
     return std::any_of(std::begin(kWriteFeatures), std::end(kWriteFeatures),
@@ -315,10 +350,12 @@ struct Settings {
         {"walk_speed_enabled", false}, {"jump_power_enabled", false}, {"aim_enabled", false},
         {"noclip", false}, {"infinite_jump", false}, {"esp_skeleton", false}, {"esp_tracers", false},
         {"esp_offscreen", false}, {"esp_health", true}, {"team_check", false}, {"aim_sticky", true},
-        {"fly", false}};
+        {"fly", false}, {"aim_health_check", false}, {"silent_aim", false},
+        {"silent_show_fov", true}};
     std::map<std::string, double> numbers{
         {"box_height", 5.4}, {"box_ratio", 0.6}, {"fps", 60}, {"fov", 70}, {"walk_speed", 16},
-        {"jump_power", 50}, {"aim_radius", 140}, {"aim_smoothing", 6}, {"fly_speed", 50}};
+        {"jump_power", 50}, {"aim_radius", 140}, {"aim_smoothing", 6}, {"fly_speed", 50}, {"aim_health_value", 50},
+        {"silent_radius", 160}};
     std::map<std::string, std::string> choices{
         {"aim_method", "mouse"}, {"aim_part", "torso"}, {"aim_priority", "crosshair"}};
 
@@ -531,6 +568,39 @@ void setMenuOpen(bool open) {
 }
 
 void saveState();
+
+NSArray<NSString*>* soundFiles() {
+    // macOS system sounds first, then the user's own files.
+    NSMutableArray<NSString*>* files = [NSMutableArray array];
+    NSString* system = @"/System/Library/Sounds";
+    for (NSString* name in [[NSFileManager.defaultManager contentsOfDirectoryAtPath:system error:nil]
+                               sortedArrayUsingSelector:@selector(compare:)]) {
+        [files addObject:[system stringByAppendingPathComponent:name]];
+    }
+    NSString* custom = [[NSHomeDirectory() stringByAppendingPathComponent:@"Library/Application Support/WeirdExt"]
+                           stringByAppendingPathComponent:@"sounds"];
+    [NSFileManager.defaultManager createDirectoryAtPath:custom withIntermediateDirectories:YES attributes:nil error:nil];
+    for (NSString* name in [[NSFileManager.defaultManager contentsOfDirectoryAtPath:custom error:nil]
+                               sortedArrayUsingSelector:@selector(compare:)]) {
+        if ([@[@"wav", @"mp3", @"aiff", @"aif", @"m4a", @"caf"] containsObject:name.pathExtension.lowercaseString]) {
+            [files addObject:[custom stringByAppendingPathComponent:name]];
+        }
+    }
+    return files;
+}
+
+NSArray<NSString*>* hitSounds = nil;
+NSSound* hitPlayer = nil;
+
+void playHitSound() {
+    if (hitSounds == nil) hitSounds = soundFiles();
+    if (hitSounds.count == 0) return;
+    hitSound = std::clamp(hitSound, 0, (int)hitSounds.count - 1);
+    [hitPlayer stop];
+    hitPlayer = [[NSSound alloc] initWithContentsOfFile:hitSounds[hitSound] byReference:YES];
+    hitPlayer.volume = (float)(hitVolume / 100.0);
+    [hitPlayer play];
+}
 void applyStyle();
 
 void quit() {
@@ -562,7 +632,7 @@ struct Bindable {
 
 const Bindable kBindable[] = {{"esp_enabled", "ESP"}, {"aim_enabled", "Aimbot"}, {"fly", "Fly"},
                               {"noclip", "Noclip"}, {"infinite_jump", "Infinite Jump"},
-                              {"walk_speed_enabled", "Speed"}};
+                              {"walk_speed_enabled", "Speed"}, {"silent_aim", "Silent aim"}};
 
 // Codes at kMouseBase + n are mouse button n; left click (n = 0) is never bindable.
 constexpr int kMouseBase = 200;
@@ -637,29 +707,40 @@ NSString* supportDirectory() {
 NSString* statePath() { return [supportDirectory() stringByAppendingPathComponent:@"settings.json"]; }
 
 // Visual and aim tuning plus key binds persist; features that write game memory never do.
-void saveState() {
+NSDictionary* stateDictionary() {
     NSMutableDictionary* bound = [NSMutableDictionary dictionary];
     for (const auto& [feature, code] : binds) bound[@(feature.c_str())] = @(code);
     NSDictionary* state = @{@"settings": settings.snapshot(false), @"binds": bound, @"aim_key": @(aimKey),
                             @"aim_mode": @(aimMode), @"accent": @(accentIndex), @"base": @(baseIndex),
-                            @"watermark": @(showWatermark)};
-    NSData* data = [NSJSONSerialization dataWithJSONObject:state
+                            @"watermark": @(showWatermark), @"hit_enabled": @(hitEnabled),
+                            @"hit_mode": @(hitMode), @"hit_sound": @(hitSound), @"hit_volume": @(hitVolume)};
+    return state;
+}
+
+// Returns the write error, or nil.
+NSError* writeState(NSString* path) {
+    NSData* data = [NSJSONSerialization dataWithJSONObject:stateDictionary()
                                                    options:NSJSONWritingPrettyPrinted error:nil];
     NSError* error = nil;
-    if (![data writeToFile:statePath() options:NSDataWritingAtomic error:&error]) {
+    [data writeToFile:path options:NSDataWritingAtomic error:&error];
+    return error;
+}
+
+void saveState() {
+    if (NSError* error = writeState(statePath())) {
         std::cerr << "[overlay] settings not saved: " << error.localizedDescription.UTF8String << std::endl;
     }
     stateDirty = false;
 }
 
-void loadState() {
-    NSData* data = [NSData dataWithContentsOfFile:statePath()];
-    if (data == nil) return;
+NSDictionary* readState(NSString* path) {
+    NSData* data = [NSData dataWithContentsOfFile:path];
+    if (data == nil) return nil;
     NSDictionary* state = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-    if (![state isKindOfClass:NSDictionary.class]) {
-        std::cerr << "[overlay] ignoring unreadable " << statePath().UTF8String << std::endl;
-        return;
-    }
+    return [state isKindOfClass:NSDictionary.class] ? state : nil;
+}
+
+void applyState(NSDictionary* state) {
     if (NSDictionary* saved = object(state, @"settings")) settings.apply(saved, false);
     if (NSDictionary* saved = object(state, @"binds")) {
         for (const Bindable& feature : kBindable) {
@@ -671,7 +752,21 @@ void loadState() {
     if (auto index = number(state, @"accent"); index && *index >= 0 && *index < std::size(kAccents)) accentIndex = (int)*index;
     if (auto index = number(state, @"base"); index && *index >= 0 && *index < std::size(kBases)) baseIndex = (int)*index;
     if (state[@"watermark"]) showWatermark = flag(state, @"watermark");
+    if (state[@"hit_enabled"]) hitEnabled = flag(state, @"hit_enabled");
+    if (auto mode = number(state, @"hit_mode"); mode && (*mode == HitOnDamage || *mode == HitOnShoot)) hitMode = (int)*mode;
+    if (auto index = number(state, @"hit_sound"); index && *index >= 0) hitSound = (int)*index;
+    if (auto volume = number(state, @"hit_volume"); volume) hitVolume = std::clamp(*volume, 0.0, 100.0);
     applyStyle();
+}
+
+void loadState() {
+    if (![NSFileManager.defaultManager fileExistsAtPath:statePath()]) return;
+    NSDictionary* state = readState(statePath());
+    if (state == nil) {
+        std::cerr << "[overlay] ignoring unreadable " << statePath().UTF8String << std::endl;
+        return;
+    }
+    applyState(state);
 }
 
 void settingsChanged() {
@@ -719,10 +814,9 @@ void pollHotkeys(bool focused, bool typing) {
 
 // ---- Overlay drawing ------------------------------------------------------------
 
-const ImU32 kTeamColors[] = {IM_COL32(255, 99, 99, 255), IM_COL32(110, 160, 255, 255), IM_COL32(120, 230, 120, 255),
-                             IM_COL32(255, 205, 80, 255), IM_COL32(200, 130, 255, 255), IM_COL32(255, 150, 60, 255)};
 
-ImU32 teamColor(int team) { return team > 0 ? kTeamColors[(team - 1) % std::size(kTeamColors)] : accentU32(); }
+// The Team's real TeamColor when known; otherwise the theme accent.
+ImU32 teamColor(const std::optional<ImU32>& color) { return color.value_or(accentU32()); }
 
 void drawLabel(ImDrawList* draw, ImVec2 anchor, bool above, const std::string& label, ImU32 color) {
     ImFont* font = ImGui::GetFont();
@@ -745,7 +839,7 @@ void drawArrow(ImDrawList* draw, ImVec2 center, float radius, const Offscreen& t
     ImVec2 normal(-direction.y, direction.x);
     ImVec2 tip = center + direction * radius;
     ImVec2 base = tip - direction * 14;
-    ImU32 color = teamColor(target.team);
+    ImU32 color = teamColor(target.color);
     draw->AddTriangleFilled(tip + direction, base + normal * 8, base - normal * 8, kShadow);
     draw->AddTriangleFilled(tip, base + normal * 7, base - normal * 7, color);
     if (distances) drawLabel(draw, base - direction * 10, false, std::to_string((int)target.distance), color);
@@ -769,6 +863,35 @@ void drawWatermark(ImDrawList* draw, double now) {
     draw->AddText(font, kLabelSize, low + ImVec2(24 + logoWidth, 6), IM_COL32(205, 208, 216, 255), text);
 }
 
+// Cursor in the game view, 0..1 from the top-left, or nothing when it is outside it.
+std::optional<ImVec2> cursorInView() {
+    if (!window.isVisible) return std::nullopt;
+    NSPoint local = [metalView convertPoint:[window convertPointFromScreen:NSEvent.mouseLocation] fromView:nil];
+    NSSize area = metalView.bounds.size;
+    if (local.x < 0 || local.y < 0 || local.x > area.width || local.y > area.height || area.width <= 0) {
+        return std::nullopt;
+    }
+    return ImVec2((float)(local.x / area.width), (float)(1.0 - local.y / area.height));
+}
+
+void drawSilent(ImDrawList* draw, ImVec2 bounds, const DisplayFrame& frame) {
+    if (!frame.silentAvailable || !frame.silentEnabled) return;
+    std::optional<ImVec2> cursor = cursorInView();
+    if (!cursor) return;
+    ImVec2 origin = *cursor * bounds;
+    ImU32 accent = accentU32();
+    if (settings.toggles.at("silent_show_fov") && frame.silentRadius) {
+        draw->AddCircle(origin, (float)*frame.silentRadius, (accent & 0x00FFFFFF) | (110u << 24), 96, 1.2f);
+    }
+    if (!frame.silentTarget) return;
+    ImVec2 target((float)frame.silentTarget->x * bounds.x, (float)frame.silentTarget->y * bounds.y);
+    draw->AddLine(origin, target, accent, 1.5f);
+    draw->AddCircle(target, 6, accent, 24, 2);
+    if (!frame.silentTarget->name.empty()) {
+        draw->AddText(target + ImVec2(9, -7), accent, frame.silentTarget->name.c_str());
+    }
+}
+
 void drawESP(ImDrawList* draw, ImVec2 bounds, double now) {
     if (showWatermark) drawWatermark(draw, now);
     RenderOptions options = presentation.packet ? presentation.packet->options : RenderOptions{};
@@ -783,6 +906,7 @@ void drawESP(ImDrawList* draw, ImVec2 bounds, double now) {
     if (frame.aimEnabled && frame.aimRadius && *frame.aimRadius >= 20 && *frame.aimRadius <= 400) {
         draw->AddCircle(center, (float)*frame.aimRadius, IM_COL32(255, 255, 255, 72), 96, 1.0f);
     }
+    drawSilent(draw, bounds, frame);
     // Overlay-center reference only. This does not validate camera pose/FOV,
     // and a custom game's crosshair need not be at the render-area center.
     if (options.centerMarker && frame.boresight) {
@@ -796,7 +920,7 @@ void drawESP(ImDrawList* draw, ImVec2 bounds, double now) {
     for (const Marker& marker : frame.targets) {
         if (marker.distance < 0 || marker.distance >= 1e9 || marker.x < 0 || marker.x > 1
             || marker.y < 0 || marker.y > 1) continue;
-        ImU32 color = teamColor(marker.team);
+        ImU32 color = teamColor(marker.color);
         ImVec2 p((float)marker.x * bounds.x, (float)marker.y * bounds.y);
         std::string distance = options.distances ? std::to_string((int)marker.distance) + " studs" : "";
         if (options.skeleton) {
@@ -848,7 +972,7 @@ void drawESP(ImDrawList* draw, ImVec2 bounds, double now) {
 
 // ---- Menu -------------------------------------------------------------------------
 
-enum class Tab { Visuals, Player, Aim, Players, Keys, Theme, Explorer };
+enum class Tab { Visuals, Player, Aim, Silent, Players, Misc, Keys, Theme, Configs, Explorer };
 
 struct TabInfo {
     Tab tab;
@@ -860,9 +984,12 @@ const TabInfo kTabs[] = {
     {Tab::Visuals, "Visuals", "ESP, filters and camera"},
     {Tab::Player, "Player", "Movement and physics"},
     {Tab::Aim, "Aim", "Target selection and smoothing"},
+    {Tab::Silent, "Silent", "Hits without moving your camera"},
     {Tab::Players, "Players", "Teleport and spectate"},
     {Tab::Keys, "Keybinds", "Per-feature toggle keys"},
+    {Tab::Misc, "Misc", "Hit sounds"},
     {Tab::Theme, "Theme", "Accent, background and overlay"},
+    {Tab::Configs, "Configs", "Save and load setups"},
     {Tab::Explorer, "Explorer", "Read-only game tree"},
 };
 
@@ -1262,6 +1389,8 @@ bool drawAim() {
     beginCard("AIMBOT", ImVec2(layout.left, layout.height));
     changed |= toggle("aim_enabled", "Enable aimbot");
     changed |= toggle("aim_sticky", "Sticky target");
+    changed |= toggle("aim_health_check", "Health check");
+    if (settings.toggles.at("aim_health_check")) changed |= slider("aim_health_value", "Max target health");
     separator();
     changed |= segmented("aim_method", "Method", {"Mouse", "Camera"});
     changed |= segmented("aim_part", "Target part", {"Head", "Torso", "Closest"});
@@ -1280,13 +1409,40 @@ bool drawAim() {
     separator();
     changed |= slider("aim_radius", "FOV radius");
     changed |= slider("aim_smoothing", "Smoothness");
-    status("Esc while choosing resets the aim key to Right Mouse. Hide teammates also skips them here.");
+    status("Esc while choosing resets the aim key to Right Mouse. Hide teammates, target part, priority "
+           "and the health check apply to the aimbot and silent aim.");
     separator();
     if (actionButton("Allow mouse control…")) {
         NSDictionary* options = @{(__bridge NSString*)kAXTrustedCheckOptionPrompt: @YES};
         AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)options);
     }
     status(aimStatus);
+    endCard();
+    return changed;
+}
+
+bool drawSilentTab() {
+    bool changed = false;
+    Columns layout = columns();
+    beginCard("SILENT AIM", ImVec2(layout.left, layout.height));
+    ImGui::BeginDisabled(!panel.silentAvailable);
+    changed |= toggle("silent_aim", "Enable silent aim");
+    ImGui::EndDisabled();
+    status(panel.silentAvailable ? panel.silentStatus : "Needs probe_offsets.py viewport.");
+    separator();
+    changed |= toggle("silent_show_fov", "Show FOV");
+    changed |= slider("silent_radius", "FOV radius");
+    status("The circle follows your cursor. A line marks the target your shots are redirected to.");
+    endCard();
+    ImGui::SameLine(0, kCardGap);
+    beginCard("METHOD", ImVec2(layout.right, layout.height));
+    status("Viewport: stretches the camera's viewport size so the cursor's ray hits the target. Works "
+           "with guns that aim via Mouse.Hit, Mouse.Target or Camera:ScreenPointToRay.");
+    separator();
+    status("Guns that raycast from the camera's look direction, or that the server re-checks, ignore it. "
+           "UI may shift while a target is held.");
+    separator();
+    status("Target part, priority, hide teammates and the health check come from the Aim tab.");
     endCard();
     return changed;
 }
@@ -1419,7 +1575,7 @@ void drawAvatar(ImDrawList* draw, ImVec2 low, float size, const PlayerRow& playe
         textAt(draw, center - extent * 0.5f, textSizePx, kText, initial.c_str());
     }
     // Team ring so colors read at a glance in the list.
-    if (player.team) draw->AddCircle(center, size / 2 + 1.5f, teamColor(player.team), 48, 2);
+    if (player.color) draw->AddCircle(center, size / 2 + 1.5f, *player.color, 48, 2);
 }
 
 bool wideButton(const char* id, const char* label, bool primary, bool enabled) {
@@ -1534,7 +1690,7 @@ void drawSelectedPlayer(float width, float height) {
         const char* team = player.team == 0 ? "None" : player.teammate ? "Teammate" : "Enemy";
         textAt(draw, pos, kSmallSize, kMuted, "Team");
         textAt(draw, pos + ImVec2(inner - textSize(kSmallSize, team).x, 0), kSmallSize,
-               player.team ? ImGui::ColorConvertU32ToFloat4(teamColor(player.team)) : kText, team);
+               player.color ? ImGui::ColorConvertU32ToFloat4(*player.color) : kText, team);
         ImGui::Dummy(ImVec2(inner, kSmallSize + 6));
         if (player.health) {
             pos = ImGui::GetCursorScreenPos();
@@ -1566,6 +1722,141 @@ void drawPlayers() {
     drawPlayerList(list, available.y);
     ImGui::SameLine(0, kCardGap);
     drawSelectedPlayer(available.x - list - kCardGap, available.y);
+}
+
+void drawMisc() {
+    Columns layout = columns();
+    beginCard("HIT SOUNDS", ImVec2(layout.left, layout.height));
+    if (switchRow("hit_enabled", "Hit sounds", hitEnabled)) stateDirty = true;
+    if (segmentedIndex("hit_mode", "Play on", {"Damage", "Shoot"}, hitMode)) stateDirty = true;
+    status(hitMode == HitOnDamage ? "An enemy loses health right after you click."
+                                  : "Every left click while Roblox is focused.");
+    separator();
+    double low = 0, high = 100;
+    ImGui::PushID("hit_volume");
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    if (ImGui::SliderScalar("##volume", ImGuiDataType_Double, &hitVolume, &low, &high, "Volume %.0f%%")) stateDirty = true;
+    ImGui::PopID();
+    if (actionButton("Preview")) playHitSound();
+    endCard();
+    ImGui::SameLine(0, kCardGap);
+    beginCard("SOUND", ImVec2(layout.right, layout.height));
+    if (hitSounds == nil) hitSounds = soundFiles();
+    for (NSUInteger index = 0; index < hitSounds.count; ++index) {
+        bool selected = (int)index == hitSound;
+        if (ImGui::Selectable(hitSounds[index].lastPathComponent.stringByDeletingPathExtension.UTF8String, selected)) {
+            hitSound = (int)index;
+            stateDirty = true;
+            playHitSound();
+        }
+    }
+    separator();
+    status("Add your own .wav/.mp3/.aiff to ~/Library/Application Support/WeirdExt/sounds");
+    if (actionButton("Open sounds folder")) {
+        [NSWorkspace.sharedWorkspace openURL:[NSURL fileURLWithPath:[[NSHomeDirectory()
+            stringByAppendingPathComponent:@"Library/Application Support/WeirdExt"] stringByAppendingPathComponent:@"sounds"]]];
+    }
+    if (actionButton("Refresh list")) hitSounds = soundFiles();
+    endCard();
+}
+
+// ---- Configs: named snapshots of everything settings.json keeps --------------------
+
+char configName[33] = "";
+NSArray<NSString*>* configList;
+std::string configSelected, configStatus;
+
+NSString* configDirectory() {
+    NSString* directory = [supportDirectory() stringByAppendingPathComponent:@"configs"];
+    [NSFileManager.defaultManager createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:nil];
+    return directory;
+}
+
+NSString* configPath(const std::string& name) {
+    return [configDirectory() stringByAppendingPathComponent:[@(name.c_str()) stringByAppendingPathExtension:@"json"]];
+}
+
+NSArray<NSString*>* listConfigs() {
+    NSMutableArray* names = [NSMutableArray array];
+    for (NSString* file in [NSFileManager.defaultManager contentsOfDirectoryAtPath:configDirectory() error:nil]) {
+        if ([file.pathExtension isEqualToString:@"json"]) [names addObject:file.stringByDeletingPathExtension];
+    }
+    return [names sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+}
+
+// Letters, digits, spaces, '-' and '_' only, so a name can never leave the configs folder.
+std::string cleanConfigName(const char* raw) {
+    std::string name;
+    for (const char* c = raw; *c; ++c) {
+        if (std::isalnum((unsigned char)*c) || *c == ' ' || *c == '-' || *c == '_') name += *c;
+    }
+    size_t first = name.find_first_not_of(' '), last = name.find_last_not_of(' ');
+    return first == std::string::npos ? "" : name.substr(first, last - first + 1);
+}
+
+bool drawConfigs() {
+    bool changed = false;
+    if (configList == nil) configList = listConfigs();
+    Columns layout = columns();
+    beginCard("SAVE", ImVec2(layout.left, layout.height));
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    bool entered = ImGui::InputTextWithHint("##config_name", "Config name", configName, sizeof configName,
+                                            ImGuiInputTextFlags_EnterReturnsTrue);
+    if (actionButton("Save config") || entered) {
+        std::string name = cleanConfigName(configName);
+        if (name.empty()) {
+            configStatus = "Type a name first (letters, numbers, spaces, - and _).";
+        } else if (NSError* error = writeState(configPath(name))) {
+            configStatus = std::string("Not saved: ") + error.localizedDescription.UTF8String;
+        } else {
+            configStatus = "Saved \"" + name + "\"";
+            configSelected = name;
+            configList = listConfigs();
+        }
+    }
+    status("Saves visuals, aim tuning, silent FOV, key binds, theme and hit sounds. Features that write "
+           "game memory (speed, fly, aimbot, silent aim…) are never switched on by a config.");
+    separator();
+    if (actionButton("Open configs folder")) {
+        [NSWorkspace.sharedWorkspace openURL:[NSURL fileURLWithPath:configDirectory()]];
+    }
+    status("Share a config by sending its .json; drop received ones into that folder and press Refresh.");
+    status(configStatus);
+    endCard();
+    ImGui::SameLine(0, kCardGap);
+    beginCard("CONFIGS", ImVec2(layout.right, layout.height));
+    float buttons = 30 * 3 + ImGui::GetStyle().ItemSpacing.y * 3 + 8;
+    ImGui::BeginChild("##config_list", ImVec2(0, ImGui::GetContentRegionAvail().y - buttons),
+                      ImGuiChildFlags_None, ImGuiWindowFlags_NoBackground);
+    if (configList.count == 0) status("No configs yet.");
+    for (NSString* name in configList) {
+        std::string entry = name.UTF8String;
+        if (ImGui::Selectable(entry.c_str(), entry == configSelected)) {
+            configSelected = entry;
+            std::snprintf(configName, sizeof configName, "%s", entry.c_str());
+        }
+    }
+    ImGui::EndChild();
+    ImGui::BeginDisabled(configSelected.empty());
+    if (actionButton("Load")) {
+        if (NSDictionary* state = readState(configPath(configSelected))) {
+            applyState(state);
+            changed = true;
+            configStatus = "Loaded \"" + configSelected + "\"";
+        } else {
+            configStatus = "Could not read \"" + configSelected + "\"";
+        }
+    }
+    if (actionButton("Delete")) {
+        [NSFileManager.defaultManager removeItemAtPath:configPath(configSelected) error:nil];
+        configStatus = "Deleted \"" + configSelected + "\"";
+        configSelected.clear();
+        configList = listConfigs();
+    }
+    ImGui::EndDisabled();
+    if (actionButton("Refresh")) configList = listConfigs();
+    endCard();
+    return changed;
 }
 
 void drawTheme() {
@@ -1625,9 +1916,11 @@ void drawSidebar(ImDrawList* draw, ImVec2 origin, ImVec2 size) {
     textAt(draw, origin + ImVec2(22 + textSize(kLogoSize, "WEIRD").x, 22), kLogoSize, accentColor(), "EXT");
     textAt(draw, origin + ImVec2(22, 22 + kLogoSize + 3), kSmallSize, kMuted, "macOS external");
     float y = 90;
+    // Rows shrink to keep every tab above the footer hint.
+    float pitch = std::min(40.0f, (size.y - y - 56) / (float)std::size(kTabs));
     for (const TabInfo& info : kTabs) {
         ImGui::PushID(info.label);
-        ImVec2 low = origin + ImVec2(12, y), extent(kSidebarWidth - 24, 36);
+        ImVec2 low = origin + ImVec2(12, y), extent(kSidebarWidth - 24, pitch - 4);
         ImGui::SetCursorScreenPos(low);
         if (ImGui::InvisibleButton("##tab", extent)) currentTab = info.tab;
         bool hovered = ImGui::IsItemHovered();
@@ -1642,7 +1935,7 @@ void drawSidebar(ImDrawList* draw, ImVec2 origin, ImVec2 size) {
         textAt(draw, low + ImVec2(16, (extent.y - kFontSize) / 2 - 1), kFontSize,
                mix(hovered ? kText : kMuted, kText, t), info.label);
         ImGui::PopID();
-        y += extent.y + 4;
+        y += pitch;
     }
     textAt(draw, origin + ImVec2(22, size.y - 46), kSmallSize, kMuted, "Right Shift");
     textAt(draw, origin + ImVec2(22, size.y - 28), kSmallSize, mix(kMuted, base().background, 0.4f), "hides this menu");
@@ -1700,9 +1993,12 @@ void drawMenu(ImVec2 bounds) {
             case Tab::Visuals: changed |= drawVisuals(); break;
             case Tab::Player: changed |= drawPlayer(); break;
             case Tab::Aim: changed |= drawAim(); break;
+            case Tab::Silent: changed |= drawSilentTab(); break;
             case Tab::Players: drawPlayers(); break;
             case Tab::Keys: drawKeys(ImGui::GetContentRegionAvail().y); break;
+            case Tab::Misc: drawMisc(); break;
             case Tab::Theme: drawTheme(); break;
+            case Tab::Configs: changed |= drawConfigs(); break;
             case Tab::Explorer: drawExplorer(); break;
         }
         ImGui::EndChild();
@@ -1844,7 +2140,10 @@ void tick() {
     }
     if (space) [keys addObject:@"space"];
     if (flags & NX_DEVICELSHIFTKEYMASK) [keys addObject:@"shift"];
-    emit(@{@"type": @"input", @"focused": @(focused), @"aim_held": @(held),
+    // Silent aim maps the cursor's shot ray onto the target.
+    id mouse = NSNull.null;
+    if (std::optional<ImVec2> cursor = cursorInView()) mouse = @[@(cursor->x), @(cursor->y)];
+    emit(@{@"type": @"input", @"focused": @(focused), @"aim_held": @(held), @"mouse": mouse,
            @"space_presses": @(spacePresses), @"available": @(inputAvailable), @"keys": keys});
 
     // Right Shift toggles the menu from Roblox or the menu itself; typing a
@@ -1891,7 +2190,29 @@ void tick() {
               : (mouseAim && !trusted) ? "Allow mouse control in Accessibility."
               : !focused ? "Focus Roblox"
               : !held ? std::string(aimMode == AimToggle ? "Press " : "Hold ") + keyName(aimKey)
+              : panel.readMs > kAimMaxAge * 1000 ? "Paused: memory reads too slow (" + std::to_string((int)panel.readMs) + " ms)"
               : aimName ? method + " aiming at " + *aimName : "No target in radius";
+
+    // Hit sounds: on shoot, every click in Roblox; on damage, an enemy's health dropping
+    // within kHitWindow of a click.
+    static bool clickDown = false;
+    static double lastClick = -1e9;
+    static std::map<long long, double> previousHealth;
+    bool click = focused && (NSEvent.pressedMouseButtons & 1);
+    if (click) lastClick = now;
+    if (hitEnabled && hitMode == HitOnShoot && click && !clickDown) playHitSound();
+    clickDown = click;
+    bool hit = false;
+    for (const PlayerRow& player : panel.players) {
+        if (!player.health) continue;
+        auto previous = previousHealth.find(player.key);
+        if (previous != previousHealth.end() && *player.health < previous->second - 1e-4 && !player.teammate
+            && now - lastClick < kHitWindow) {
+            hit = true;
+        }
+        previousHealth[player.key] = *player.health;
+    }
+    if (hitEnabled && hitMode == HitOnDamage && hit) playHitSound();
 
     trackGameWindow(now);
     CGSize size = metalView.bounds.size;

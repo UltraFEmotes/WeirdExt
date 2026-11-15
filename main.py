@@ -23,8 +23,10 @@ import threading
 import time
 
 from rbxl.esp_reader import ESPReader, Frame, OffsetSpec
+from rbxl.brickcolors import rgb as brick_rgb
 from rbxl.esp_settings import Settings
-from rbxl.aim import aim_step
+from rbxl.fast_attach import learn as learn_fast_attach
+from rbxl.aim import aim_step, choose_target
 from rbxl.camera_aim import CameraAimController
 from rbxl.camera_control import CameraController
 from rbxl.explorer import build_tree
@@ -32,6 +34,7 @@ from rbxl.input_state import InputState
 from rbxl.movement import MovementController, MovementSpec
 from rbxl.physics_control import PhysicsController, PhysicsSpec
 from rbxl.session import SessionHealth, SessionRecovery, SessionWatcher
+from rbxl.silent_aim import SilentAimController
 from rbxl.spectate import SpectateController
 from rbxl.native_build import build_overlay
 from rbxl.profiles import select_profile
@@ -103,6 +106,7 @@ def display_packet(frame: Frame, fov: float, viewport, settings: Settings, basis
                 w = h * settings.box_ratio * viewport[1] / viewport[0]
             distance = math.dist(frame.position, target.position)
             team = teams.index(target.team) + 1 if target.team else 0
+            color = list(brick_rgb(target.team_color) or ()) or None
             if not 0 <= x <= 1 or not 0 <= y <= 1 or not 0.001 < h < 2.5:
                 if not target.is_local:
                     relative = [target.position[axis] - frame.position[axis] for axis in range(3)]
@@ -110,7 +114,7 @@ def display_packet(frame: Frame, fov: float, viewport, settings: Settings, basis
                     rise = sum(relative[axis] * up[axis] for axis in range(3))
                     if math.hypot(across, rise) > 1e-6:
                         offscreen.append({"angle": math.atan2(-rise, across), "name": target.name,
-                                          "distance": distance, "team": team})
+                                          "distance": distance, "team": team, "color": color})
                 continue
             bones = []
             for start_name, end_name in BONES:
@@ -124,7 +128,7 @@ def display_packet(frame: Frame, fov: float, viewport, settings: Settings, basis
                 health = min(max(target.health / target.max_health, 0.0), 1.0)
             targets.append({"name": target.name, "x": x, "y": y, "w": w, "h": h,
                             "target_index": target_index, "distance": distance, "bones": bones,
-                            "health": health, "team": team, "teammate": teammate})
+                            "health": health, "team": team, "color": color, "teammate": teammate})
     players = []
     if frame.local_position is not None:
         for target in frame.targets:
@@ -135,6 +139,7 @@ def display_packet(frame: Frame, fov: float, viewport, settings: Settings, basis
             players.append({"key": target.address, "name": target.name, "health": health,
                             "distance": math.dist(frame.local_position, target.position),
                             "team": teams.index(target.team) + 1 if target.team else 0,
+                            "color": list(brick_rgb(target.team_color) or ()) or None,
                             "teammate": bool(target.team) and target.team == frame.local_team})
         players.sort(key=lambda player: player["distance"])
     return {"targets": targets, "offscreen": offscreen, "players": players, "status": frame.status,
@@ -150,6 +155,13 @@ def build_spectate(reader):
         return SpectateController(reader), "Not spectating"
     except ValueError as exc:
         return None, f"Spectate unavailable: {exc}"
+
+
+def build_silent(reader):
+    try:
+        return SilentAimController(reader), "Off"
+    except ValueError as exc:
+        return None, f"Silent aim unavailable: {exc}"
 
 
 def run_player_action(action, key, frame, physics, spectate, now):
@@ -505,9 +517,39 @@ def arguments(argv=None):
     return args
 
 
-def attach_session(pid, spec, *, fresh=False):
-    """One discovery pass; raises on failure so callers can retry cleanly."""
-    return ESPReader.attach(pid, spec, **({"fresh": True} if fresh else {}))
+AIM_MAX_READ_MS = 150.0  # reads routinely take 40-80 ms; a slower frame is too stale to aim from
+FAST_REJOIN_GRACE = 30.0  # seconds of failed instant attaches before recovery falls back to the sweep
+
+
+def attach_session(pid, attach, profile, *, fresh=False, sweep=True):
+    """One discovery pass; raises on failure so callers can retry cleanly.
+
+    After a full sweep, learn an instant-attach path from this session and use it
+    from now on (and save it for the next launch)."""
+    reader = ESPReader.attach(pid, attach["spec"], fresh=fresh, sweep=sweep)
+    if not reader.via_fast:
+        print("[esp] learning an instant-attach path for next time…", flush=True)
+        learned = learn_fast_attach(reader, profile)
+        if learned is None:
+            print("[esp] no instant-attach path found; attaching keeps using the sweep", flush=True)
+        else:
+            attach["spec"] = learned
+            print(f"[esp] instant attach saved (global +{learned.fast_slot:#x}); "
+                  "next launch and rejoins skip the sweep", flush=True)
+    return reader
+
+
+def recovery_attach(attach, profile):
+    """Rejoin attach: while a chain is known, only instant attaches (cheap, every retry) until
+    they have failed for FAST_REJOIN_GRACE seconds, then one full sweep that relearns the chain."""
+    def attempt(pid):
+        now = time.monotonic()
+        failing_since = attach.setdefault("fast_failing_since", now)
+        sweep = attach["spec"].fast_slot is None or now - failing_since >= FAST_REJOIN_GRACE
+        reader = attach_session(pid, attach, profile, fresh=True, sweep=sweep)
+        attach.pop("fast_failing_since", None)
+        return reader
+    return attempt
 
 
 def build_controllers(reader, args, spec):
@@ -542,8 +584,8 @@ def build_controllers(reader, args, spec):
             physics, physics_status, camera_aim)
 
 
-def close_controllers(camera_control, movement, physics, spectate=None):
-    for controller in (spectate, camera_control, physics, movement):
+def close_controllers(camera_control, movement, physics, spectate=None, silent=None):
+    for controller in (silent, spectate, camera_control, physics, movement):
         if controller is not None:
             try:
                 controller.close()
@@ -559,6 +601,8 @@ def main(argv=None):
     camera_aim = None
     spectate = None
     player_status = "Not spectating"
+    silent = None
+    silent_status = "Not connected"
     reader = None
     recovery = None
     try:
@@ -577,10 +621,11 @@ def main(argv=None):
                                 box_ratio=args.box_ratio, fps=args.fps)
             if overlay:
                 overlay.send_control({"cmd": "settings_state", "settings": settings.event()})
-            recovery = SessionRecovery(lambda candidate_pid: attach_session(candidate_pid, spec, fresh=True),
+            attach = {"spec": spec}
+            recovery = SessionRecovery(recovery_attach(attach, args.profile),
                                        find_roblox_pid)
             try:
-                reader = attach_session(pid, spec)
+                reader = attach_session(pid, attach, args.profile)
             except (RuntimeError, MemoryFault, OSError) as exc:
                 print(f"[session] waiting for a loaded game: {exc}", flush=True)
                 if overlay:
@@ -594,6 +639,7 @@ def main(argv=None):
                 (camera_control, camera_status, movement, movement_status,
                  physics, physics_status, camera_aim) = build_controllers(reader, args, spec)
                 spectate, player_status = build_spectate(reader)
+                silent, silent_status = build_silent(reader)
             state = {"inset": None, "quit": False, "basis_mode": "columns"}
             control = threading.Thread(target=_pump_controls, args=(state, overlay), daemon=True)
             control.start()
@@ -642,6 +688,7 @@ def main(argv=None):
                         (camera_control, camera_status, movement, movement_status,
                          physics, physics_status, camera_aim) = build_controllers(reader, args, spec)
                         spectate, player_status = build_spectate(reader)
+                        silent, silent_status = build_silent(reader)
                         if physics is not None:
                             physics.space_seen = inputs.space_presses
                         inputs = InputState(space_presses=inputs.space_presses)
@@ -696,7 +743,9 @@ def main(argv=None):
                     print(f"[session] invalidated ({exc}); waiting for the next game", flush=True)
                     # Do not restore fields into a detached game tree.
                     # Restoration is only attempted on a validated shutdown.
-                    movement = camera_control = physics = camera_aim = spectate = None
+                    if silent is not None:
+                        silent.stop()
+                    movement = camera_control = physics = camera_aim = spectate = silent = None
                     player_status = "Waiting for next game"
                     SessionRecovery._dispose(reader)
                     reader = None
@@ -721,8 +770,30 @@ def main(argv=None):
                 # The sticky lock lasts one right-mouse hold.
                 aim_lock = aim_lock if inputs.aim_held else None
                 step = (aim_step(frame, fov, viewport, settings, elapsed, state["basis_mode"], aim_lock)
-                        if frame.complete and timing["read_ms"] < 50 else None)
+                        if frame.complete and timing["read_ms"] < AIM_MAX_READ_MS else None)
                 aim_lock = step["key"] if step is not None else None
+                silent_target = None
+                if silent is not None:
+                    try:
+                        if settings.silent_aim:
+                            # The silent FOV circle follows the cursor: that is where the shot ray starts.
+                            cursor = ((inputs.mouse[0] * viewport[0], inputs.mouse[1] * viewport[1])
+                                      if inputs.mouse else None)
+                            chosen = (choose_target(frame, fov, viewport, settings, state["basis_mode"],
+                                                    center=cursor, radius=settings.silent_radius)
+                                      if frame.complete and timing["read_ms"] < AIM_MAX_READ_MS else None)
+                            point = (chosen[2][0] / viewport[0], chosen[2][1] / viewport[1]) if chosen else None
+                            silent.tick(point, inputs.mouse, inputs.focused and inputs.fresh(time.monotonic()))
+                            if point is not None and silent.status == "Active":
+                                silent_target = {"x": point[0], "y": point[1], "name": chosen[0].name}
+                        else:
+                            silent.restore()
+                            silent.status = "Off"
+                        silent_status = silent.status
+                    except (MemoryFault, OSError) as exc:
+                        silent_status = f"Silent aim paused: {exc}"
+                        silent.stop()
+                        silent = None
                 if camera_aim is not None and step is not None and frame.complete:
                     try:
                         rotation = camera_aim.tick(frame, step, settings, inputs, elapsed, time.monotonic())
@@ -740,6 +811,9 @@ def main(argv=None):
                               noclip_available=physics is not None, noclip_status=physics_status,
                               toasts=session.feed(tick))
                 packet["aim"] = step
+                packet.update(silent_available=silent is not None, silent_status=silent_status,
+                              silent_enabled=settings.silent_aim, silent_radius=settings.silent_radius,
+                              silent_target=silent_target)
                 packet.update(spectating=spectate.target if spectate is not None else 0,
                               player_status=player_status, spectate_available=spectate is not None,
                               teleport_available=physics is not None and bool(physics.spec.solver_positions))
@@ -793,7 +867,7 @@ def main(argv=None):
         if reader is not None:
             try:
                 reader.validate_session()
-                close_controllers(camera_control, movement, physics, spectate)
+                close_controllers(camera_control, movement, physics, spectate, silent)
             except Exception as exc:
                 print(f"[session] skipping stale restoration: {exc}", flush=True)
             SessionRecovery._dispose(reader)
